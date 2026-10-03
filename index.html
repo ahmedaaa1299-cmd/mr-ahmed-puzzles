@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mawhiba Puzzle Challenge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one phone-width column, a score strip on top, one puzzle "board" at a time, actions pinned under the board. */
+:root {
+  --bg: #EAF4F2;        /* pale sea-glass ground */
+  --surface: #FFFFFF;   /* the puzzle board */
+  --sunk: #DCEBE8;      /* wells, empty cells */
+  --ink: #0E2A33;       /* text, walls */
+  --muted: #4E6A72;     /* secondary text */
+  --line: #B9D2CE;      /* borders */
+  --teal: #0B7A75;      /* primary action, filled tiles */
+  --teal-ink: #FFFFFF;  /* text on teal */
+  --star: #F2A900;      /* stars, lamps on */
+  --coral: #D9482B;     /* robot, wrong-answer cue */
+  --plum: #6B3FA0;      /* third bead colour */
+  --display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", Tahoma, Arial, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1C22; --surface: #13303A; --sunk: #0E252D; --ink: #E8F3F1; --muted: #9DB8BC; --line: #2A4B55;
+    --teal: #3CC6BD; --teal-ink: #062A2A; --star: #FFC233; --coral: #FF7A55; --plum: #B892F0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1C22; --surface: #13303A; --sunk: #0E252D; --ink: #E8F3F1; --muted: #9DB8BC; --line: #2A4B55;
+  --teal: #3CC6BD; --teal-ink: #062A2A; --star: #FFC233; --coral: #FF7A55; --plum: #B892F0; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.45; }
+.app { max-width: 460px; margin: 0 auto; padding-inline: 16px; padding-block: 14px 28px; display: flex; flex-direction: column; gap: 14px; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 3px solid var(--star); outline-offset: 2px; }
+
+/* score strip */
+.strip { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; min-width: 0; }
+.score { font-family: var(--display); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score .st { color: var(--star); }
+.pips { display: flex; gap: 6px; }
+.pip { flex: 1; height: 8px; border-radius: 4px; background: var(--sunk); border: 1px solid var(--line); }
+.pip.done { background: var(--teal); border-color: var(--teal); }
+.pip.now { background: var(--star); border-color: var(--star); }
+
+/* board */
+.board { background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r); padding: 18px 16px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 5px 0 var(--ink); }
+.eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+h1, h2 { font-family: var(--display); font-weight: 800; line-height: 1.05; margin: 0; text-wrap: balance; }
+h1 { font-size: 40px; }
+h2 { font-size: 28px; }
+p { margin: 0; }
+.prompt { color: var(--ink); }
+.play { background: var(--sunk); border-radius: 10px; padding: 16px 10px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.say { min-height: 1.5em; font-weight: 700; }
+.say.bad { color: var(--coral); }
+.say.good { color: var(--teal); }
+.hint { color: var(--muted); font-size: 15px; }
+.actions { display: flex; gap: 10px; align-items: center; }
+.btn { flex: 1; background: var(--teal); color: var(--teal-ink); border: 2px solid var(--ink); border-radius: 12px; padding: 12px 14px; font-family: var(--display); font-weight: 700; font-size: 20px; box-shadow: 0 4px 0 var(--ink); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.btn.ghost { flex: 0 0 auto; background: transparent; color: var(--muted); border-color: transparent; box-shadow: none; font-size: 16px; font-family: var(--body); text-decoration: underline; padding-inline: 8px; }
+.btn.small { flex: 0 0 auto; font-size: 16px; padding: 8px 12px; background: var(--surface); color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 80% { transform: translateX(-3px); } }
+
+/* start + end */
+.list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.list li { background: var(--sunk); border-radius: 8px; padding: 8px 10px; font-weight: 700; font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
+.list .n { font-family: var(--display); color: var(--teal); font-size: 18px; }
+.note { font-size: 15px; color: var(--muted); }
+.big { font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; }
+.big .st { color: var(--star); }
+.badge { align-self: flex-start; background: var(--star); color: #0E2A33; font-family: var(--display); font-weight: 800; font-size: 20px; padding: 4px 14px; border-radius: 999px; border: 2px solid var(--ink); }
+.parent { border-top: 2px dashed var(--line); padding-top: 12px; }
+.parent b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+#confetti { position: fixed; inset: 0; pointer-events: none; width: 100%; height: 100%; }
+
+/* 1 beads */
+.beads { display: grid; grid-template-columns: repeat(6, 40px); gap: 10px 6px; justify-content: center; }
+.bead { width: 40px; height: 40px; display: grid; place-items: center; background: transparent; border: 0; padding: 0; }
+.bead i { display: block; width: 32px; height: 32px; }
+.bead .c { border-radius: 50%; background: var(--teal); }
+.bead .t { background: var(--coral); clip-path: polygon(50% 4%, 100% 96%, 0 96%); }
+.bead .s { background: var(--plum); border-radius: 5px; }
+.bead.blank { border: 3px dashed var(--ink); border-radius: 50%; font-family: var(--display); font-weight: 800; font-size: 20px; background: var(--surface); }
+.bead.blank i { width: 24px; height: 24px; }
+
+/* 2 mirror */
+.mirror { display: grid; grid-template-columns: repeat(3, 42px) 6px repeat(3, 42px); gap: 4px; }
+.mirror .cell { width: 42px; height: 42px; border-radius: 6px; border: 2px solid var(--line); background: var(--surface); padding: 0; }
+.mirror .cell.on { background: var(--teal); border-color: var(--ink); }
+.mirror .cell.fixed { cursor: default; }
+.mirror .axis { grid-row: 1 / span 4; grid-column: 4; background: repeating-linear-gradient(var(--coral) 0 8px, transparent 8px 14px); border-radius: 3px; }
+
+/* 3 seesaws */
+.saws { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.saw { width: 104px; height: 74px; position: relative; }
+.saw .plank { position: absolute; left: 6px; right: 6px; top: 40px; height: 6px; border-radius: 3px; background: var(--ink); transform: rotate(-11deg); }
+.saw .pivot { position: absolute; left: 50%; top: 44px; width: 0; height: 0; margin-left: -12px; border-left: 12px solid transparent; border-right: 12px solid transparent; border-bottom: 22px solid var(--muted); }
+.saw .a, .saw .b { position: absolute; font-size: 30px; line-height: 1; }
+.saw .a { left: 4px; top: 22px; }   /* heavier: lower side */
+.saw .b { right: 4px; top: 0; }     /* lighter: higher side */
+.saw.flip { transform: scaleX(-1); }            /* heavier animal on the right for this one */
+.saw.flip .a, .saw.flip .b { transform: scaleX(-1); }
+.slots, .pool { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.slot, .animal { width: 56px; height: 56px; border-radius: 10px; font-size: 30px; line-height: 1; display: grid; place-items: center; padding: 0; }
+.slot { border: 3px dashed var(--ink); background: var(--surface); }
+.animal { border: 2px solid var(--ink); background: var(--surface); box-shadow: 0 3px 0 var(--ink); }
+.animal[disabled] { opacity: .25; box-shadow: none; }
+.ends { display: flex; justify-content: space-between; width: 100%; max-width: 250px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+
+/* 4 machine */
+.machine { display: grid; grid-template-columns: auto auto auto; gap: 6px 12px; align-items: center; font-family: var(--display); font-weight: 800; font-size: 26px; font-variant-numeric: tabular-nums; }
+.machine .box { background: var(--ink); color: var(--surface); border-radius: 8px; padding: 0 12px; font-size: 16px; letter-spacing: .08em; height: 34px; display: grid; place-items: center; }
+.machine .in, .machine .out { min-width: 52px; text-align: center; }
+.machine .out.q { border: 3px dashed var(--ink); border-radius: 8px; background: var(--surface); min-height: 40px; padding: 0 8px; }
+.pad { display: grid; grid-template-columns: repeat(6, 44px); gap: 6px; justify-content: center; }
+.pad button { height: 44px; border-radius: 8px; border: 2px solid var(--ink); background: var(--surface); font-family: var(--display); font-weight: 700; font-size: 22px; box-shadow: 0 3px 0 var(--ink); padding: 0; }
+
+/* 5 lamps */
+.lamps { display: flex; gap: 10px; justify-content: center; }
+.lamp { width: 52px; height: 52px; border-radius: 50%; border: 3px solid var(--ink); background: var(--surface); padding: 0; position: relative; }
+.lamp.on { background: var(--star); box-shadow: 0 0 0 6px color-mix(in srgb, var(--star) 35%, transparent); }
+.lamp::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 18px; height: 8px; margin-left: -9px; background: var(--ink); border-radius: 0 0 4px 4px; }
+.count { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* 6 robot */
+.grid { display: grid; grid-template-columns: repeat(5, 46px); gap: 3px; }
+.grid .sq { width: 46px; height: 46px; border-radius: 6px; background: var(--surface); border: 2px solid var(--line); display: grid; place-items: center; font-size: 26px; line-height: 1; }
+.grid .wall { background: var(--ink); border-color: var(--ink); }
+.grid .goal { color: var(--star); font-size: 30px; }
+.bot { width: 30px; height: 30px; border-radius: 8px; background: var(--coral); border: 2px solid var(--ink); position: relative; }
+.bot::before, .bot::after { content: ""; position: absolute; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--surface); }
+.bot::before { left: 5px; } .bot::after { right: 5px; }
+.prog { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; min-height: 34px; }
+.prog span { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-weight: 700; font-size: 18px; }
+.prog span.filled { border-color: var(--ink); }
+.prog span.live { background: var(--star); color: #0E2A33; }
+.keys { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.keys button { width: 46px; height: 46px; border-radius: 10px; border: 2px solid var(--ink); background: var(--surface); font-size: 22px; font-weight: 700; box-shadow: 0 3px 0 var(--ink); padding: 0; }
+
+@media (max-width: 380px) {
+  h1 { font-size: 34px; }
+  .mirror { grid-template-columns: repeat(3, 38px) 6px repeat(3, 38px); }
+  .mirror .cell { width: 38px; height: 38px; }
+  .grid { grid-template-columns: repeat(5, 42px); }
+  .grid .sq { width: 42px; height: 42px; }
+  .pad { grid-template-columns: repeat(6, 40px); }
+  .slot, .animal { width: 50px; height: 50px; }
+  .lamp { width: 46px; height: 46px; }
+}
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } .btn:active { transform: none; } }
+</style>
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="app">
+  <div class="strip">
+    <div class="brand">Al Ekhaa International Schools · Mawhiba</div>
+    <div class="score" aria-label="Stars earned"><span class="st">★</span> <span id="starCount">0</span>/18</div>
+  </div>
+  <div class="pips" id="pips" aria-hidden="true"></div>
+  <main class="board" id="board"></main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var el = function (tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  var board = $("#board"), pips = $("#pips"), starCount = $("#starCount");
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var state = { idx: -1, stars: [null, null, null, null, null, null] };
+  var tries = 0, cur = null, timer = null;
+
+  function starsFor(n) { return n <= 1 ? 3 : n === 2 ? 2 : 1; }
+  function total() { return state.stars.reduce(function (a, b) { return a + (b || 0); }, 0); }
+  function starText(n) { return "★★★".slice(0, n) + "☆☆☆".slice(0, 3 - n); }
+
+  // ---------------- puzzles ----------------
+  var PUZZLES = [
+    { // 1. pattern
+      name: "Bead String",
+      prompt: "The beads follow a repeating pattern. Tap each empty bead until it shows the right shape.",
+      hint: "Look at the first four beads. Then the same four come again.",
+      make: function (play) {
+        var pat = ["c", "t", "t", "s"], seq = [], blanks = { 5: null, 8: null, 10: null }, order = ["c", "t", "s"];
+        for (var i = 0; i < 12; i++) seq.push(pat[i % 4]);
+        var wrap = el("div", "beads");
+        seq.forEach(function (k, i) {
+          var b;
+          if (i in blanks) {
+            b = el("button", "bead blank", "?"); b.type = "button"; b.setAttribute("aria-label", "Empty bead " + (i + 1) + ", tap to change shape");
+            b.onclick = function () {
+              var n = blanks[i] == null ? 0 : (order.indexOf(blanks[i]) + 1) % 3;
+              blanks[i] = order[n]; b.innerHTML = '<i class="' + order[n] + '"></i>';
+            };
+          } else { b = el("div", "bead", '<i class="' + k + '"></i>'); }
+          wrap.appendChild(b);
+        });
+        play.appendChild(wrap);
+        return { check: function () { return Object.keys(blanks).every(function (i) { return blanks[i] === seq[i]; }); } };
+      }
+    },
+    { // 2. mirror
+      name: "Mirror Wall",
+      prompt: "The dotted line is a mirror. Tap the squares on the right so the right side is the mirror picture of the left side.",
+      hint: "A square next to the mirror stays next to the mirror.",
+      make: function (play) {
+        var L = [[1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 1, 1]], R = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]];
+        var g = el("div", "mirror");
+        g.appendChild(el("div", "axis"));
+        L.forEach(function (row, r) {
+          row.forEach(function (v, c) { var d = el("div", "cell fixed" + (v ? " on" : "")); d.style.gridRow = r + 1; d.style.gridColumn = c + 1; g.appendChild(d); });
+          [0, 1, 2].forEach(function (c) {
+            var b = el("button", "cell"); b.type = "button"; b.style.gridRow = r + 1; b.style.gridColumn = c + 5;
+            b.setAttribute("aria-label", "Right side, row " + (r + 1) + ", square " + (c + 1));
+            b.onclick = function () { R[r][c] = R[r][c] ? 0 : 1; b.classList.toggle("on", !!R[r][c]); };
+            g.appendChild(b);
+          });
+        });
+        play.appendChild(g);
+        return { check: function () { return L.every(function (row, r) { return row.every(function (v, c) { return R[r][2 - c] === v; }); }); } };
+      }
+    },
+    { // 3. ordering
+      name: "Seesaw",
+      prompt: "On each seesaw the heavier animal goes down. Tap the animals in order, from the lightest to the heaviest.",
+      hint: "Find the animal that never goes down. It is the lightest.",
+      make: function (play) {
+        var A = { mouse: "🐭", rabbit: "🐰", fox: "🦊", bear: "🐻" }, right = ["mouse", "rabbit", "fox", "bear"];
+        var pairs = [["fox", "rabbit"], ["bear", "fox"], ["rabbit", "mouse"]]; // [heavier, lighter]
+        var saws = el("div", "saws");
+        pairs.forEach(function (p, n) {
+          var s = el("div", "saw" + (n === 1 ? " flip" : ""), '<span class="a">' + A[p[0]] + '</span><span class="b">' + A[p[1]] + '</span><div class="plank"></div><div class="pivot"></div>');
+          s.setAttribute("role", "img"); s.setAttribute("aria-label", "The " + p[0] + " is heavier than the " + p[1]);
+          saws.appendChild(s);
+        });
+        var picked = [], slots = el("div", "slots"), pool = el("div", "pool"), btns = {};
+        function draw() {
+          slots.innerHTML = "";
+          for (var i = 0; i < 4; i++) {
+            var s = el("button", "slot", picked[i] ? A[picked[i]] : ""); s.type = "button";
+            s.setAttribute("aria-label", picked[i] ? "Place " + (i + 1) + ": " + picked[i] + ", tap to remove" : "Place " + (i + 1) + ", empty");
+            (function (i) { s.onclick = function () { if (picked[i]) { picked.splice(i, 1); draw(); } }; })(i);
+            slots.appendChild(s);
+          }
+          Object.keys(btns).forEach(function (k) { btns[k].disabled = picked.indexOf(k) >= 0; });
+        }
+        ["fox", "mouse", "bear", "rabbit"].forEach(function (k) {
+          var b = el("button", "animal", A[k]); b.type = "button"; b.setAttribute("aria-label", k);
+          b.onclick = function () { if (picked.length < 4 && picked.indexOf(k) < 0) { picked.push(k); draw(); } };
+          btns[k] = b; pool.appendChild(b);
+        });
+        play.appendChild(saws); play.appendChild(el("div", "ends", "<span>Lightest</span><span>Heaviest</span>")); play.appendChild(slots); play.appendChild(pool);
+        draw();
+        return { check: function () { return picked.join() === right.join(); } };
+      }
+    },
+    { // 4. rule finding
+      name: "Number Machine",
+      prompt: "The machine uses one secret rule to change every number. What comes out when 10 goes in?",
+      hint: "Each time, the number is doubled and then a little more is added.",
+      make: function (play) {
+        var val = "";
+        var m = el("div", "machine");
+        [[2, 5], [4, 9], [7, 15]].forEach(function (p) { m.insertAdjacentHTML("beforeend", '<span class="in">' + p[0] + '</span><span class="box">MACHINE</span><span class="out">' + p[1] + "</span>"); });
+        m.insertAdjacentHTML("beforeend", '<span class="in">10</span><span class="box">MACHINE</span><span class="out q" id="ans" aria-live="polite">?</span>');
+        var pad = el("div", "pad");
+        "0123456789".split("").concat(["⌫"]).forEach(function (k) {
+          var b = el("button", "", k); b.type = "button"; b.setAttribute("aria-label", k === "⌫" ? "Delete" : k);
+          b.onclick = function () { if (k === "⌫") val = val.slice(0, -1); else if (val.length < 3) val += k; $("#ans").textContent = val || "?"; };
+          pad.appendChild(b);
+        });
+        play.appendChild(m); play.appendChild(pad);
+        return { check: function () { return val === "21"; } };
+      }
+    },
+    { // 5. toggling
+      name: "Lamp Row",
+      prompt: "Tapping a lamp flips it and the lamps right next to it. Switch every lamp on.",
+      hint: "Start with a lamp at one end. Try Reset if you get lost.",
+      auto: true,
+      make: function (play, api) {
+        var start = [0, 1, 1, 1, 0], on = start.slice(), taps = 0;
+        var row = el("div", "lamps"), count = el("div", "count"), reset = el("button", "btn small", "Reset"); reset.type = "button";
+        var lamps = on.map(function (_, i) {
+          var b = el("button", "lamp"); b.type = "button";
+          b.onclick = function () {
+            if (api.solved()) return;
+            [i - 1, i, i + 1].forEach(function (j) { if (j >= 0 && j < 5) on[j] = on[j] ? 0 : 1; });
+            taps++; draw();
+            if (on.every(Boolean)) api.solve(taps <= 5 ? 3 : taps <= 9 ? 2 : 1);
+          };
+          row.appendChild(b); return b;
+        });
+        function draw() {
+          lamps.forEach(function (b, i) { b.classList.toggle("on", !!on[i]); b.setAttribute("aria-label", "Lamp " + (i + 1) + (on[i] ? ", on" : ", off")); });
+          count.textContent = "Taps: " + taps;
+        }
+        reset.onclick = function () { if (api.solved()) return; on = start.slice(); draw(); };
+        play.appendChild(row); play.appendChild(count); play.appendChild(reset); draw();
+        return {};
+      }
+    },
+    { // 6. sequence of instructions
+      name: "Robot Delivery",
+      prompt: "Write the steps that take the robot to the star. It cannot pass through the dark blocks. Then press Run.",
+      hint: "The robot must go right first. Plan the whole path with your finger before you write it.",
+      run: true,
+      make: function (play, api) {
+        var N = 5, MAX = 9, startPos = [4, 0], goal = [0, 4], walls = ["3,0", "3,1", "4,3", "2,2", "2,3"];
+        var D = { "↑": [-1, 0], "↓": [1, 0], "←": [0, -1], "→": [0, 1] }, names = { "↑": "up", "↓": "down", "←": "left", "→": "right" };
+        var prog = [], pos = startPos.slice(), busy = false;
+        var grid = el("div", "grid"), strip = el("div", "prog"), keys = el("div", "keys"), cells = {};
+        grid.setAttribute("role", "img"); grid.setAttribute("aria-label", "A 5 by 5 grid. The robot starts in the bottom left corner. The star is in the top right corner.");
+        for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) { var d = el("div", "sq" + (walls.indexOf(r + "," + c) >= 0 ? " wall" : "")); cells[r + "," + c] = d; grid.appendChild(d); }
+        function drawGrid() {
+          Object.keys(cells).forEach(function (k) { if (cells[k].className.indexOf("wall") < 0) { cells[k].innerHTML = ""; cells[k].classList.remove("goal"); } });
+          var g = cells[goal.join()]; g.classList.add("goal"); g.textContent = "★";
+          cells[pos.join()].innerHTML = '<div class="bot"></div>';
+        }
+        function drawProg(live) {
+          strip.innerHTML = "";
+          for (var i = 0; i < MAX; i++) { var s = el("span", (prog[i] ? "filled" : "") + (i === live ? " live" : ""), prog[i] || ""); strip.appendChild(s); }
+        }
+        Object.keys(D).concat(["⌫"]).forEach(function (k) {
+          var b = el("button", "", k); b.type = "button"; b.setAttribute("aria-label", k === "⌫" ? "Delete last step" : "Add step " + names[k]);
+          b.onclick = function () {
+            if (busy || api.solved()) return;
+            if (k === "⌫") prog.pop(); else if (prog.length < MAX) prog.push(k);
+            pos = startPos.slice(); drawGrid(); drawProg(-1); api.say("", "");
+          };
+          keys.appendChild(b);
+        });
+        play.appendChild(grid); play.appendChild(strip); play.appendChild(keys);
+        drawGrid(); drawProg(-1);
+        return {
+          run: function (done) {
+            if (busy) return;
+            if (!prog.length) { api.say("Add some steps first.", "bad"); return; }
+            busy = true; pos = startPos.slice(); drawGrid();
+            var i = 0;
+            (function step() {
+              if (i >= prog.length) { busy = false; drawProg(-1); return done(pos.join() === goal.join(), "The robot stopped before the star."); }
+              drawProg(i);
+              var d = D[prog[i]], nr = pos[0] + d[0], nc = pos[1] + d[1];
+              if (nr < 0 || nc < 0 || nr >= N || nc >= N || walls.indexOf(nr + "," + nc) >= 0) { busy = false; return done(false, "Bump! Step " + (i + 1) + " hits a block or the edge."); }
+              pos = [nr, nc]; drawGrid(); i++;
+              timer = setTimeout(step, reduced ? 60 : 300);
+            })();
+          }
+        };
+      }
+    }
+  ];
+
+  // ---------------- screens ----------------
+  function drawStrip() {
+    starCount.textContent = total();
+    pips.innerHTML = "";
+    for (var i = 0; i < 6; i++) pips.appendChild(el("div", "pip" + (state.stars[i] != null ? " done" : i === state.idx ? " now" : "")));
+  }
+
+  function showStart() {
+    state.idx = -1; drawStrip();
+    board.innerHTML = "";
+    board.appendChild(el("div", "eyebrow", "For boys in Grades 3 to 6"));
+    board.appendChild(el("h1", "", "Mawhiba Puzzle Challenge"));
+    board.appendChild(el("p", "prompt", "Six short puzzles, about eight minutes. No school knowledge needed, only thinking."));
+    var ul = el("ol", "list");
+    PUZZLES.forEach(function (p, i) { ul.appendChild(el("li", "", '<span class="n">' + (i + 1) + "</span>" + p.name)); });
+    board.appendChild(ul);
+    board.appendChild(el("p", "note", "Parents: you can read the instructions aloud, but let him do the thinking. Each puzzle is worth up to three stars."));
+    var row = el("div", "actions"), go = el("button", "btn", "Start"); go.type = "button"; go.id = "startBtn";
+    go.onclick = function () { showPuzzle(0); };
+    row.appendChild(go); board.appendChild(row);
+  }
+
+  function showPuzzle(i) {
+    clearTimeout(timer);
+    state.idx = i; tries = 0; drawStrip();
+    var p = PUZZLES[i], solved = false;
+    board.innerHTML = "";
+    board.appendChild(el("div", "eyebrow", "Puzzle " + (i + 1) + " of 6"));
+    board.appendChild(el("h2", "", p.name));
+    board.appendChild(el("p", "prompt", p.prompt));
+    var play = el("div", "play"), say = el("p", "say"), hint = el("p", "hint"), row = el("div", "actions");
+    say.setAttribute("aria-live", "polite"); hint.hidden = true; hint.textContent = "Hint: " + p.hint;
+    var main = el("button", "btn", p.run ? "Run" : "Check"); main.type = "button"; main.id = "mainBtn";
+    var skip = el("button", "btn ghost", "Skip"); skip.type = "button"; skip.id = "skipBtn";
+
+    var api = {
+      solved: function () { return solved; },
+      say: function (t, cls) { say.textContent = t; say.className = "say " + (cls || ""); },
+      solve: function (n) {
+        solved = true; state.stars[i] = n; drawStrip();
+        api.say("Solved! " + starText(n), "good"); hint.hidden = true;
+        main.hidden = false; main.textContent = i === 5 ? "See my stars" : "Next puzzle"; skip.hidden = true;
+        main.onclick = next;
+      },
+      miss: function (msg) {
+        api.say(msg || "Not yet. Look again and try once more.", "bad");
+        if (tries >= 2) hint.hidden = false;
+        if (!reduced) { play.classList.remove("shake"); void play.offsetWidth; play.classList.add("shake"); }
+      }
+    };
+    function next() { if (i === 5) showEnd(); else showPuzzle(i + 1); }
+
+    cur = p.make(play, api);
+    if (p.auto) main.hidden = true;
+    main.onclick = function () {
+      if (p.run) {
+        cur.run(function (ok, msg) { tries++; if (ok) api.solve(starsFor(tries)); else api.miss(msg + " Change your steps and run again."); });
+      } else {
+        tries++;
+        if (cur.check()) api.solve(starsFor(tries)); else api.miss();
+      }
+    };
+    skip.onclick = function () { clearTimeout(timer); state.stars[i] = 0; next(); };
+
+    row.appendChild(main); row.appendChild(skip);
+    board.appendChild(play); board.appendChild(say); board.appendChild(hint); board.appendChild(row);
+    if (p.auto) { timer = setTimeout(function () { if (!solved) hint.hidden = false; }, 45000); }
+    window.scrollTo(0, 0);
+  }
+
+  function showEnd() {
+    state.idx = 6; drawStrip();
+    var t = total(), name = t >= 15 ? "Master Mind" : t >= 10 ? "Sharp Thinker" : "Puzzle Explorer";
+    board.innerHTML = "";
+    board.appendChild(el("div", "eyebrow", "Challenge complete"));
+    board.appendChild(el("div", "big", '<span class="st">★</span> ' + t + "<span style=\"font-size:.5em\"> of 18</span>"));
+    board.appendChild(el("div", "badge", name));
+    board.appendChild(el("p", "prompt", "Well done for thinking your way through all six puzzles."));
+    board.appendChild(el("div", "parent", "<b>For parents</b>Puzzles like these are what the Bebras and Kangaroo Mawhiba competitions are made of. Both are open to Grades 3 to 6. If your son enjoyed them, reply to Mr. Ahmed on WhatsApp and he will send you the details."));
+    var row = el("div", "actions"), again = el("button", "btn small", "Play again"); again.type = "button"; again.id = "againBtn";
+    again.onclick = function () { state.stars = [null, null, null, null, null, null]; showStart(); };
+    row.appendChild(again); board.appendChild(row);
+    confetti();
+    window.scrollTo(0, 0);
+  }
+
+  function confetti() {
+    if (reduced) return;
+    var cv = $("#confetti"), ctx = cv.getContext("2d"), W = cv.width = innerWidth, H = cv.height = innerHeight;
+    var css = getComputedStyle(document.documentElement), cols = ["--teal", "--star", "--coral", "--plum"].map(function (v) { return css.getPropertyValue(v).trim(); });
+    var bits = []; for (var i = 0; i < 90; i++) bits.push({ x: Math.random() * W, y: -20 - Math.random() * H * .5, v: 2 + Math.random() * 3, w: 6 + Math.random() * 6, a: Math.random() * 6, c: cols[i % 4], s: (Math.random() - .5) * 2 });
+    var t0 = performance.now();
+    (function frame(now) {
+      ctx.clearRect(0, 0, W, H);
+      bits.forEach(function (b) { b.y += b.v; b.x += b.s; b.a += .1; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a); ctx.fillStyle = b.c; ctx.fillRect(-b.w / 2, -b.w / 4, b.w, b.w / 2); ctx.restore(); });
+      if (now - t0 < 3500) requestAnimationFrame(frame); else ctx.clearRect(0, 0, W, H);
+    })(t0);
+  }
+
+  function start(data) {
+    if (data && data.stars && data.stars.length === 6) {
+      state.stars = data.stars;
+      if (data.idx >= 0 && data.idx <= 5) return showPuzzle(data.idx);
+      if (data.idx === 6) return showEnd();
+    }
+    showStart();
+  }
+  start({});
+})();
+</script>
+
+</body>
+</html>
