@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bebras Practice Challenge</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;600&display=swap">
+<style>
+/* Layout: one centred column. Header with school logo and teacher; a sticky time/points bar during play;
+   a board of five task cards; each task opens with four level tabs like the real contest. */
+:root {
+  --bg: #EAF4F2; --surface: #FFFFFF; --sunk: #DCEBE8; --ink: #0E2A33; --muted: #4E6A72; --line: #B9D2CE;
+  --teal: #0B7A75; --teal-ink: #FFFFFF; --star: #F2A900; --coral: #D9482B; --plum: #6B3FA0; --good: #13804A;
+  --display: "Baloo Bhaijaan 2", "Trebuchet MS", "Segoe UI", sans-serif;
+  --body: "Atkinson Hyperlegible", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B1C22; --surface: #13303A; --sunk: #0E252D; --ink: #E8F3F1; --muted: #9DB8BC; --line: #2A4B55;
+    --teal: #3CC6BD; --teal-ink: #062A2A; --star: #FFC233; --coral: #FF7A55; --plum: #B892F0; --good: #4FD18B; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0B1C22; --surface: #13303A; --sunk: #0E252D; --ink: #E8F3F1; --muted: #9DB8BC; --line: #2A4B55;
+  --teal: #3CC6BD; --teal-ink: #062A2A; --star: #FFC233; --coral: #FF7A55; --plum: #B892F0; --good: #4FD18B; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.45; margin: 0; }
+.app { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 32px; display: flex; flex-direction: column; gap: 14px; }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 3px solid var(--star); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: 36px; } h2 { font-size: 26px; } h3 { font-size: 20px; }
+p { margin: 0; }
+
+/* header */
+.top { display: flex; align-items: center; gap: 12px; }
+.top img { width: 74px; height: auto; background: #fff; border-radius: 10px; padding: 4px; border: 1px solid var(--line); }
+.who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.who b { font-family: var(--display); font-size: 17px; line-height: 1.2; }
+.who span { font-size: 13px; color: var(--muted); }
+.langBtn { border: 2px solid var(--ink); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 700; box-shadow: 0 3px 0 var(--ink); }
+
+/* time / points bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 10px; background: var(--ink); color: var(--bg); border-radius: 12px; padding: 8px 12px; }
+.bar .stat { display: flex; flex-direction: column; line-height: 1.1; }
+.bar .stat small { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+.bar .stat b { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
+.bar .stat.low b { color: var(--coral); }
+.bar .sp { flex: 1; }
+.bar button { background: transparent; color: var(--bg); border: 2px solid currentColor; border-radius: 10px; padding: 6px 12px; font-weight: 700; }
+.bar button.sure { background: var(--coral); border-color: var(--coral); color: #fff; }
+
+/* cards and panels */
+.panel { background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r); padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 5px 0 var(--ink); }
+.eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.facts { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.facts li { background: var(--sunk); border-radius: 8px; padding: 8px 10px; font-weight: 700; font-size: 15px; }
+.note { font-size: 14px; color: var(--muted); }
+.btn { background: var(--teal); color: var(--teal-ink); border: 2px solid var(--ink); border-radius: 12px; padding: 11px 18px; font-family: var(--display); font-weight: 700; font-size: 19px; box-shadow: 0 4px 0 var(--ink); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.btn.alt { background: var(--surface); color: var(--ink); }
+.btn.small { font-size: 16px; padding: 7px 12px; box-shadow: 0 3px 0 var(--ink); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* task board */
+.tasks { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.tcard { background: var(--surface); border: 2px solid var(--ink); border-radius: 12px; padding: 14px 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; box-shadow: 0 4px 0 var(--ink); text-align: center; }
+.tcard .ic { font-size: 40px; line-height: 1; }
+.tcard b { font-family: var(--display); font-size: 18px; }
+.stars { font-size: 20px; letter-spacing: 2px; color: var(--line); white-space: nowrap; }
+.stars .on { color: var(--star); }
+
+/* task view */
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { border: 2px solid var(--ink); background: var(--surface); border-radius: 10px; padding: 6px 10px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.tab.cur { background: var(--ink); color: var(--bg); }
+.tab .st { color: var(--star); letter-spacing: 1px; }
+.tab.ok::after { content: "✓"; color: var(--good); font-weight: 800; }
+.tab.cur.ok::after { color: #8ff0bb; }
+.taskhead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; }
+.instr { background: var(--sunk); border-radius: 10px; padding: 12px; }
+.play { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 6px 0; }
+.say { min-height: 1.5em; font-weight: 700; text-align: center; }
+.say.bad { color: var(--coral); } .say.good { color: var(--good); }
+.explain { border: 2px dashed var(--teal); border-radius: 10px; padding: 12px; }
+.explain b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--teal); margin-bottom: 4px; }
+.ltr { direction: ltr; }
+.info { font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.chip { background: var(--star); color: #0E2A33; border-radius: 999px; padding: 3px 10px; font-weight: 700; font-size: 14px; }
+.shake { animation: shake .35s; }
+@keyframes shake { 20% { transform: translateX(-6px); } 50% { transform: translateX(6px); } 80% { transform: translateX(-3px); } }
+
+/* task 1: map */
+svg.map { width: 100%; max-width: 520px; height: auto; touch-action: manipulation; }
+.map .road { stroke: var(--line); stroke-width: 6; stroke-linecap: round; }
+.map .road.on { stroke: var(--teal); stroke-width: 9; }
+.map .wbg { fill: var(--surface); stroke: var(--ink); stroke-width: 1.5; }
+.map .wt { fill: var(--ink); font: 700 14px var(--body); text-anchor: middle; dominant-baseline: central; }
+.map .node { fill: var(--surface); stroke: var(--ink); stroke-width: 3; cursor: pointer; }
+.map .node.visited { fill: var(--sunk); stroke: var(--teal); }
+.map .node.here { fill: var(--star); }
+.map .nt { font: 700 17px var(--body); text-anchor: middle; dominant-baseline: central; fill: var(--ink); pointer-events: none; }
+
+/* task 2: robot */
+.grid { display: grid; gap: 3px; }
+.grid .sq { width: 46px; height: 46px; border-radius: 6px; background: var(--surface); border: 2px solid var(--line); display: grid; place-items: center; font-size: 24px; line-height: 1; }
+.grid .wall { background: var(--ink); border-color: var(--ink); }
+.grid .goal { color: var(--star); font-size: 28px; }
+.grid .trail { background: color-mix(in srgb, var(--teal) 22%, var(--surface)); }
+.bot { width: 30px; height: 30px; border-radius: 8px; background: var(--coral); border: 2px solid var(--ink); position: relative; }
+.bot::before, .bot::after { content: ""; position: absolute; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--surface); }
+.bot::before { left: 5px; } .bot::after { right: 5px; }
+.prog { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; max-width: 420px; }
+.prog span { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; background: var(--surface); border: 2px solid var(--line); font-weight: 700; font-size: 18px; }
+.prog span.filled { border-color: var(--ink); }
+.prog span.live { background: var(--star); color: #0E2A33; }
+.keys { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.keys button { width: 46px; height: 46px; border-radius: 10px; border: 2px solid var(--ink); background: var(--surface); font-size: 22px; font-weight: 700; box-shadow: 0 3px 0 var(--ink); padding: 0; }
+
+/* task 3: pixels */
+.pix { display: flex; gap: 18px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.pix figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pix figcaption { font-weight: 700; font-size: 14px; color: var(--muted); }
+.pg { display: grid; gap: 2px; background: var(--line); padding: 2px; border-radius: 6px; }
+.pg i { display: block; width: 30px; height: 30px; background: var(--surface); }
+.pg i.on { background: var(--plum); }
+.pg.goal i { width: 22px; height: 22px; }
+.ops { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 360px; }
+.ops button { border: 2px solid var(--ink); background: var(--surface); border-radius: 10px; padding: 8px; font-weight: 700; box-shadow: 0 3px 0 var(--ink); display: flex; align-items: center; justify-content: center; gap: 6px; }
+.ops button span { font-size: 20px; }
+
+/* task 4: lockers */
+.beavers { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.beaver { border: 2px solid var(--ink); border-radius: 10px; padding: 6px 10px; background: var(--surface); text-align: center; min-width: 74px; }
+.beaver b { display: block; font-family: var(--display); font-size: 20px; }
+.bag { font-size: 20px; letter-spacing: 2px; white-space: nowrap; }
+.s-c { color: var(--teal); } .s-t { color: var(--coral); } .s-s { color: var(--plum); } .s-r { color: var(--star); }
+.lockers { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 440px; }
+.locker { display: flex; align-items: center; gap: 10px; border: 2px solid var(--ink); border-radius: 10px; padding: 8px 10px; background: var(--surface); }
+.locker .num { font-family: var(--display); font-weight: 800; font-size: 18px; width: 28px; text-align: center; }
+.locker .rule { flex: 1; font-weight: 700; }
+.locker button { width: 52px; height: 44px; border-radius: 8px; border: 3px dashed var(--ink); background: var(--sunk); font-family: var(--display); font-weight: 800; font-size: 22px; }
+.locker button.set { border-style: solid; background: var(--star); color: #0E2A33; }
+
+/* task 5: sort */
+.line { display: flex; align-items: flex-end; gap: 2px; justify-content: center; max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+.bv { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.bv .tower { width: 34px; background: var(--teal); border: 2px solid var(--ink); border-radius: 6px 6px 2px 2px; display: grid; place-items: end center; color: var(--teal-ink); font-weight: 800; padding-bottom: 2px; }
+.bv .face { font-size: 20px; line-height: 1; }
+.swap { align-self: center; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--ink); background: var(--surface); font-size: 14px; font-weight: 800; padding: 0; margin-bottom: 18px; }
+
+/* review */
+.rv { display: flex; flex-direction: column; gap: 10px; }
+.rvrow { border: 2px solid var(--ink); border-radius: 12px; padding: 10px 12px; background: var(--surface); display: flex; flex-direction: column; gap: 8px; }
+.rvhead { display: flex; align-items: center; gap: 10px; justify-content: space-between; flex-wrap: wrap; }
+.rvlv { display: flex; gap: 6px; flex-wrap: wrap; }
+.rvlv button { border: 2px solid var(--ink); background: var(--surface); border-radius: 8px; padding: 5px 9px; font-weight: 700; font-size: 14px; }
+.rvlv button.ok { background: color-mix(in srgb, var(--good) 22%, var(--surface)); }
+.big { font-family: var(--display); font-weight: 800; font-size: 52px; line-height: 1; font-variant-numeric: tabular-nums; }
+.parent { border-top: 2px dashed var(--line); padding-top: 12px; }
+.parent b { display: block; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.foot { text-align: center; font-size: 13px; color: var(--muted); }
+
+@media (max-width: 420px) {
+  h1 { font-size: 30px; }
+  .grid .sq { width: 42px; height: 42px; }
+  .pg i { width: 26px; height: 26px; } .pg.goal i { width: 18px; height: 18px; }
+  .bv .tower { width: 24px; }
+  .bv .face { font-size: 16px; }
+  .swap { width: 22px; height: 22px; font-size: 12px; }
+  .top img { width: 60px; }
+}
+@media (prefers-reduced-motion: reduce) { .shake { animation: none; } .btn:active { transform: none; } }
+</style>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <img id="logo" alt="Al Ekhaa Private Schools logo" src="data:image/png;base64,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">
+    <div class="who"><b id="hSchool"></b><span id="hTeacher"></span></div>
+    <button class="langBtn" id="langBtn" type="button"></button>
+  </header>
+  <div class="bar" id="bar" hidden>
+    <div class="stat" id="tStat"><small id="tLbl"></small><b id="tVal">20:00</b></div>
+    <div class="stat"><small id="pLbl"></small><b id="pVal">0</b></div>
+    <div class="sp"></div>
+    <button type="button" id="finishBtn"></button>
+  </div>
+  <main id="view"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // ------------------------------------------------------------------ text
+  var TXT = {
+    en: {
+      title: "Bebras Practice Challenge", school: "Al Ekhaa International Schools", teacher: "Prepared by Mr. Ahmed · Mawhiba, Elementary Stage",
+      lang: "عربي", intro: "Five tasks in the style of the Bebras Mawhiba competition. Each task has four levels, from easy to hard. Open any task, in any order, and try as many levels as you can before the time runs out.",
+      facts: ["5 tasks × 4 levels", "20 minutes", "10 points per level, 200 in total", "Solving a harder level also gives you the points of the easier levels"],
+      disclaimer: "A practice activity for our students. It is not an official Mawhiba test.",
+      start: "Start", time: "Time", points: "Points", finish: "Finish", sure: "Tap again", back: "All tasks", check: "Check", run: "Run", restart: "Restart", level: "Level",
+      correct: "Correct! Level {l} solved.", wrong: "Not yet. Look again and try once more.",
+      doneTitle: "Challenge finished", timeUp: "Time is up!", score: "Your score", of: "of",
+      review: "See the answers", again: "Start again", parents: "For parents",
+      parentsText: "This practice follows the format of the Bebras Mawhiba competition: tasks with four levels, solved in any order, against the clock. The real test has 10 tasks and lasts 60 minutes. Past official tests are free at english.bebrasksa.org, in the Practice tab.",
+      reviewTitle: "Answers and explanations", reviewNote: "Tap a level to see its answer and the explanation.", solved: "solved", notSolved: "not solved",
+      explanation: "Explanation", backReview: "Back to answers", answerMode: "Answer", task: "Task", undo: "Undo", steps: "Steps", swaps: "Swaps",
+      foot: "Mr. Ahmed · Al Ekhaa International Schools"
+    },
+    ar: {
+      title: "تحدي بيبراس التدريبي", school: "مدارس الإخاء – القسم الدولي", teacher: "إعداد أ. أحمد · موهبة، المرحلة الابتدائية",
+      lang: "English", intro: "خمس مهام على نمط مسابقة بيبراس موهبة. لكل مهمة أربعة مستويات من السهل إلى الصعب. افتح أي مهمة وبأي ترتيب، وحاول حل أكبر عدد من المستويات قبل انتهاء الوقت.",
+      facts: ["5 مهام × 4 مستويات", "20 دقيقة", "10 نقاط لكل مستوى، والمجموع 200", "حل مستوى أصعب يعطيك نقاط المستويات الأسهل أيضًا"],
+      disclaimer: "نشاط تدريبي لطلابنا، وليس اختبارًا رسميًا من موهبة.",
+      start: "ابدأ", time: "الوقت", points: "النقاط", finish: "إنهاء", sure: "اضغط مرة أخرى", back: "كل المهام", check: "تحقق", run: "شغّل", restart: "ابدأ من جديد", level: "المستوى",
+      correct: "إجابة صحيحة! تم حل المستوى {l}.", wrong: "ليس بعد. انظر مرة أخرى وحاول ثانية.",
+      doneTitle: "انتهى التحدي", timeUp: "انتهى الوقت!", score: "نتيجتك", of: "من",
+      review: "شاهد الإجابات", again: "ابدأ من جديد", parents: "لأولياء الأمور",
+      parentsText: "هذا التدريب على نفس نظام مسابقة بيبراس موهبة: مهام لكل منها أربعة مستويات، تُحل بأي ترتيب، مع وقت محدد. الاختبار الحقيقي فيه 10 مهام ومدته 60 دقيقة. الاختبارات الرسمية السابقة متاحة مجانًا في موقع english.bebrasksa.org من تبويب Practice.",
+      reviewTitle: "الإجابات والشرح", reviewNote: "اضغط على أي مستوى لترى إجابته وشرحها.", solved: "محلول", notSolved: "غير محلول",
+      explanation: "الشرح", backReview: "رجوع للإجابات", answerMode: "الإجابة", task: "المهمة", undo: "تراجع", steps: "الخطوات", swaps: "التبديلات",
+      foot: "أ. أحمد · مدارس الإخاء"
+    }
+  };
+  var S = { lang: "en", phase: "start", remaining: 1200, timer: null, best: [0, 0, 0, 0, 0], solved: [], cur: { t: 0, l: 0 }, mode: "play", timeUp: false, sureT: null };
+  for (var i = 0; i < 5; i++) S.solved.push([false, false, false, false]);
+  try { var sv = localStorage.getItem("bebrasPracticeLang"); if (sv === "ar" || sv === "en") S.lang = sv; } catch (e) {}
+
+  function t(k) { return TXT[S.lang][k]; }
+  function L(o) { return o == null ? "" : (typeof o === "string" ? o : o[S.lang]); }
+  function fmt(s, v) { return String(s).replace(/\{(\w+)\}/g, function (_, k) { return v[k] != null ? v[k] : ""; }); }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function btn(cls, html, fn) { var b = el("button", cls, html); b.type = "button"; if (fn) b.onclick = fn; return b; }
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function sv_(tag, attrs) { var e = document.createElementNS(SVGNS, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  var SH = { "●": "s-c", "▲": "s-t", "■": "s-s", "★": "s-r" };
+  function shapes(str) { return Array.from(str).map(function (c) { return '<span class="' + (SH[c] || "") + '">' + c + "</span>"; }).join(""); }
+
+  // ------------------------------------------------------------------ task 1: shortest route
+  function dijkstra(adj, src) {
+    var dist = {}, prev = {}, done = {}, nodes = Object.keys(adj);
+    nodes.forEach(function (n) { dist[n] = Infinity; }); dist[src] = 0;
+    for (;;) {
+      var u = null; nodes.forEach(function (n) { if (!done[n] && (u === null || dist[n] < dist[u])) u = n; });
+      if (u === null || dist[u] === Infinity) break; done[u] = true;
+      Object.keys(adj[u]).forEach(function (v) { var d = dist[u] + adj[u][v]; if (d < dist[v]) { dist[v] = d; prev[v] = u; } });
+    }
+    return { dist: dist, prev: prev };
+  }
+  function seg(adj, a, b) { var r = dijkstra(adj, a), p = [b]; while (p[0] !== a) p.unshift(r.prev[p[0]]); return { len: r.dist[b], path: p }; }
+  function bestRoute(D, adj) {
+    var orders = [[]];
+    if (D.via.length === 1) orders = [[D.via[0]]];
+    if (D.via.length === 2) orders = [[D.via[0], D.via[1]], [D.via[1], D.via[0]]];
+    var best = null;
+    orders.forEach(function (o) {
+      var stops = [D.start].concat(o, [D.end]), len = 0, path = [D.start];
+      for (var i = 1; i < stops.length; i++) { var s = seg(adj, stops[i - 1], stops[i]); len += s.len; path = path.concat(s.path.slice(1)); }
+      if (!best || len < best.len) best = { len: len, path: path };
+    });
+    return best;
+  }
+  var ICON = { S: "🏠", E: "🚩", M: "🛒", K: "🏫" };
+  var PLACE = { M: { en: "the market 🛒", ar: "السوق 🛒" }, K: { en: "the school 🏫", ar: "المدرسة 🏫" } };
+  function mountPath(area, D, api, mode) {
+    var adj = {};
+    D.edges.forEach(function (e) { (adj[e[0]] = adj[e[0]] || {})[e[1]] = e[2]; (adj[e[1]] = adj[e[1]] || {})[e[0]] = e[2]; });
+    var sol = bestRoute(D, adj), path = [D.start];
+    var svg = sv_("svg", { viewBox: "0 0 " + D.w + " " + D.h, "class": "map", role: "img" });
+    var info = el("div", "info");
+    function key(a, b) { return a < b ? a + b : b + a; }
+    function len(p) { var s = 0; for (var i = 1; i < p.length; i++) s += adj[p[i - 1]][p[i]]; return s; }
+    function name(id) { return ICON[id] || id; }
+    function draw() {
+      svg.innerHTML = "";
+      var on = {}; for (var i = 1; i < path.length; i++) on[key(path[i - 1], path[i])] = 1;
+      D.edges.forEach(function (e) {
+        var a = D.nodes[e[0]], b = D.nodes[e[1]];
+        svg.appendChild(sv_("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], "class": "road" + (on[key(e[0], e[1])] ? " on" : "") }));
+      });
+      D.edges.forEach(function (e) {
+        var a = D.nodes[e[0]], b = D.nodes[e[1]], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+        svg.appendChild(sv_("circle", { cx: mx, cy: my, r: 12, "class": "wbg" }));
+        var tx = sv_("text", { x: mx, y: my, "class": "wt" }); tx.textContent = e[2]; svg.appendChild(tx);
+      });
+      Object.keys(D.nodes).forEach(function (id) {
+        var p = D.nodes[id], last = path[path.length - 1];
+        var c = sv_("circle", { cx: p[0], cy: p[1], r: 21, "class": "node" + (path.indexOf(id) >= 0 ? " visited" : "") + (id === last ? " here" : "") });
+        c.setAttribute("tabindex", mode === "play" ? "0" : "-1");
+        c.setAttribute("aria-label", "Stop " + id);
+        c.addEventListener("click", function () { tap(id); });
+        c.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); tap(id); } });
+        svg.appendChild(c);
+        var tx = sv_("text", { x: p[0], y: p[1], "class": "nt" }); tx.textContent = name(id); svg.appendChild(tx);
+      });
+      info.innerHTML = "";
+      var rt = el("div"); rt.dir = "ltr"; rt.textContent = path.map(name).join(" → "); info.appendChild(rt);
+      info.appendChild(el("div", "", (S.lang === "ar" ? "الطول: " : "Length: ") + len(path)));
+    }
+    function tap(id) {
+      if (mode !== "play" || api.locked()) return;
+      var last = path[path.length - 1];
+      if (id === last && path.length > 1) path.pop();
+      else if (adj[last] && adj[last][id] != null) path.push(id);
+      api.say("", ""); draw();
+    }
+    var wrap = el("div", "ltr"); wrap.appendChild(svg);
+    area.appendChild(wrap); area.appendChild(info);
+    if (mode === "solution") path = sol.path.slice();
+    draw();
+    return {
+      check: function (done) {
+        var last = path[path.length - 1];
+        if (last !== D.end) return done(false, { en: "Your route must end at the flag 🚩.", ar: "يجب أن ينتهي طريقك عند العلم 🚩." });
+        var miss = D.via.filter(function (v) { return path.indexOf(v) < 0; });
+        if (miss.length) return done(false, { en: "Your route must pass through " + miss.map(function (m) { return PLACE[m].en; }).join(" and ") + ".", ar: "يجب أن يمر طريقك عبر " + miss.map(function (m) { return PLACE[m].ar; }).join(" و") + "." });
+        var l = len(path);
+        if (l > sol.len) return done(false, { en: "Your route is " + l + " long. There is a shorter one.", ar: "طول طريقك " + l + ". يوجد طريق أقصر." });
+        done(true);
+      },
+      reset: function () { path = [D.start]; draw(); },
+      facts: function () { return { route: "\u2066" + sol.path.map(name).join(" → ") + "\u2069", len: sol.len, via: D.via.map(function (v) { return L(PLACE[v]); }).join(S.lang === "ar" ? " و" : " and ") }; }
+    };
+  }
+
+  // ------------------------------------------------------------------ task 2: robot program
+  var DIRS = { "↑": [-1, 0], "↓": [1, 0], "←": [0, -1], "→": [0, 1] };
+  function robotBFS(D) {
+    var walls = {}; D.walls.forEach(function (w) { walls[w] = 1; });
+    var full = (1 << D.coins.length) - 1, start = D.start.join(",") + ",0", q = [start], prev = {}; prev[start] = null;
+    while (q.length) {
+      var s = q.shift(), p = s.split(",").map(Number);
+      if (p[0] === D.goal[0] && p[1] === D.goal[1] && p[2] === full) {
+        var moves = []; while (prev[s]) { moves.unshift(prev[s][1]); s = prev[s][0]; } return moves;
+      }
+      for (var k in DIRS) {
+        var r = p[0] + DIRS[k][0], c = p[1] + DIRS[k][1];
+        if (r < 0 || c < 0 || r >= D.n || c >= D.n || walls[r + "," + c]) continue;
+        var m = p[2]; D.coins.forEach(function (cn, i) { if (cn[0] === r && cn[1] === c) m |= 1 << i; });
+        var ns = r + "," + c + "," + m; if (!(ns in prev)) { prev[ns] = [s, k]; q.push(ns); }
+      }
+    }
+    return null;
+  }
+  function mountRobot(area, D, api, mode) {
+    var sol = robotBFS(D), MAX = sol.length + (D.slack || 0);
+    var walls = {}; D.walls.forEach(function (w) { walls[w] = 1; });
+    var prog = [], pos = D.start.slice(), got = {}, trail = {}, busy = false, timer = null;
+    var grid = el("div", "grid ltr"); grid.style.gridTemplateColumns = "repeat(" + D.n + ", auto)";
+    var cells = {};
+    for (var r = 0; r < D.n; r++) for (var c = 0; c < D.n; c++) { var d = el("div", "sq" + (walls[r + "," + c] ? " wall" : "")); cells[r + "," + c] = d; grid.appendChild(d); }
+    var strip = el("div", "prog ltr"), keys = el("div", "keys ltr");
+    function drawGrid() {
+      Object.keys(cells).forEach(function (k) { if (!walls[k]) { cells[k].className = "sq" + (trail[k] ? " trail" : ""); cells[k].innerHTML = ""; } });
+      D.coins.forEach(function (cn, i) { if (!got[i]) cells[cn.join(",")].textContent = "🍎"; });
+      var g = cells[D.goal.join(",")]; if (g.innerHTML === "") { g.classList.add("goal"); g.textContent = "★"; }
+      cells[pos.join(",")].innerHTML = '<div class="bot"></div>';
+    }
+    function drawProg(live) {
+      strip.innerHTML = "";
+      for (var i = 0; i < MAX; i++) strip.appendChild(el("span", (prog[i] ? "filled" : "") + (i === live ? " live" : ""), prog[i] || ""));
+    }
+    function home() { pos = D.start.slice(); got = {}; trail = {}; drawGrid(); }
+    Object.keys(DIRS).concat(["⌫"]).forEach(function (k) {
+      var b = btn("", k, function () {
+        if (mode !== "play" || busy || api.locked()) return;
+        if (k === "⌫") prog.pop(); else if (prog.length < MAX) prog.push(k);
+        home(); drawProg(-1); api.say("", "");
+      });
+      b.setAttribute("aria-label", k === "⌫" ? "Delete last step" : "Add step " + k);
+      keys.appendChild(b);
+    });
+    area.appendChild(el("div", "info", (S.lang === "ar" ? "أقصى عدد للخطوات: " : "Most steps allowed: ") + MAX));
+    area.appendChild(grid); area.appendChild(strip); if (mode === "play") area.appendChild(keys);
+    if (mode === "solution") {
+      prog = sol.slice(); var p = D.start.slice(); trail[p.join(",")] = 1;
+      prog.forEach(function (m) { p = [p[0] + DIRS[m][0], p[1] + DIRS[m][1]]; trail[p.join(",")] = 1; D.coins.forEach(function (cn, i) { if (cn[0] === p[0] && cn[1] === p[1]) got[i] = 1; }); });
+      pos = p; drawGrid(); drawProg(-1);
+    } else { home(); drawProg(-1); }
+    return {
+      isRun: true,
+      check: function (done) {
+        if (busy) return;
+        if (!prog.length) return done(false, { en: "Add some steps first.", ar: "أضف بعض الخطوات أولًا." });
+        busy = true; home(); var i = 0; trail[pos.join(",")] = 1;
+        (function step() {
+          if (i >= prog.length) {
+            busy = false; drawProg(-1);
+            var all = D.coins.every(function (_, j) { return got[j]; }), atGoal = pos[0] === D.goal[0] && pos[1] === D.goal[1];
+            if (atGoal && all) return done(true);
+            if (atGoal) return done(false, { en: "The robot reached the star but missed an apple.", ar: "وصل الروبوت إلى النجمة لكنه لم يجمع كل التفاح." });
+            return done(false, { en: "The robot stopped before the star.", ar: "توقف الروبوت قبل أن يصل إلى النجمة." });
+          }
+          drawProg(i);
+          var d = DIRS[prog[i]], nr = pos[0] + d[0], nc = pos[1] + d[1];
+          if (nr < 0 || nc < 0 || nr >= D.n || nc >= D.n || walls[nr + "," + nc]) { busy = false; return done(false, { en: "Bump! Step " + (i + 1) + " hits a block or the edge.", ar: "اصطدام! الخطوة " + (i + 1) + " تصطدم بحاجز أو بالحافة." }); }
+          pos = [nr, nc]; trail[pos.join(",")] = 1; D.coins.forEach(function (cn, j) { if (cn[0] === nr && cn[1] === nc) got[j] = 1; });
+          drawGrid(); i++; timer = setTimeout(step, reduced ? 60 : 260);
+        })();
+      },
+      reset: function () { clearTimeout(timer); busy = false; prog = []; home(); drawProg(-1); },
+      stop: function () { clearTimeout(timer); },
+      facts: function () { return { prog: "\u2066" + sol.join(" ") + "\u2069", n: sol.length }; }
+    };
+  }
+
+  // ------------------------------------------------------------------ task 3: pixel machine
+  var OPS = {
+    inv: { icon: "◐", name: { en: "Swap colours", ar: "اعكس الألوان" }, f: function (g) { return g.map(function (r) { return r.map(function (v) { return 1 - v; }); }); } },
+    mir: { icon: "⇆", name: { en: "Mirror", ar: "مرآة" }, f: function (g) { return g.map(function (r) { return r.slice().reverse(); }); } },
+    rgt: { icon: "→", name: { en: "Move right", ar: "حرّك يمينًا" }, f: function (g) { return g.map(function (r) { return [r[r.length - 1]].concat(r.slice(0, -1)); }); } },
+    lft: { icon: "←", name: { en: "Move left", ar: "حرّك يسارًا" }, f: function (g) { return g.map(function (r) { return r.slice(1).concat([r[0]]); }); } }
+  };
+  var OPKEYS = ["inv", "mir", "rgt", "lft"];
+  function parseG(rows) { return rows.map(function (r) { return Array.from(r).map(Number); }); }
+  function gk(g) { return g.map(function (r) { return r.join(""); }).join("/"); }
+  function pixelBFS(start, target) {
+    var s = gk(start), goal = gk(target), q = [[start, []]], seen = {}; seen[s] = 1;
+    if (s === goal) return [];
+    while (q.length) {
+      var it = q.shift();
+      for (var i = 0; i < OPKEYS.length; i++) {
+        var ng = OPS[OPKEYS[i]].f(it[0]), k = gk(ng), path = it[1].concat([OPKEYS[i]]);
+        if (k === goal) return path;
+        if (!seen[k] && path.length < 7) { seen[k] = 1; q.push([ng, path]); }
+      }
+    }
+    return null;
+  }
+  function mountPixel(area, D, api, mode) {
+    var start = parseG(D.start), target = start;
+    D.ops.forEach(function (o) { target = OPS[o].f(target); });
+    var sol = pixelBFS(start, target), LIMIT = sol.length, cur = start, hist = [];
+    var nowG = el("div", "pg"), goalG = el("div", "pg goal");
+    [nowG, goalG].forEach(function (g) { g.style.gridTemplateColumns = "repeat(" + start[0].length + ", auto)"; });
+    function paint(g, m) { g.innerHTML = ""; m.forEach(function (r) { r.forEach(function (v) { g.appendChild(el("i", v ? "on" : "")); }); }); }
+    var info = el("div", "info");
+    function draw() { paint(nowG, cur); paint(goalG, target); info.textContent = t("steps") + ": " + hist.length + " / " + LIMIT; }
+    var pix = el("div", "pix ltr");
+    var f1 = el("figure"); f1.appendChild(nowG); f1.appendChild(el("figcaption", "", S.lang === "ar" ? "الآن" : "Now"));
+    var f2 = el("figure"); f2.appendChild(goalG); f2.appendChild(el("figcaption", "", S.lang === "ar" ? "الهدف" : "Goal"));
+    pix.appendChild(f1); pix.appendChild(f2);
+    area.appendChild(pix); area.appendChild(info);
+    if (mode === "play") {
+      var ops = el("div", "ops");
+      OPKEYS.forEach(function (k) {
+        ops.appendChild(btn("", "<span>" + OPS[k].icon + "</span>" + L(OPS[k].name), function () { if (api.locked()) return; hist.push(cur); cur = OPS[k].f(cur); api.say("", ""); draw(); }));
+      });
+      ops.appendChild(btn("", "<span>↶</span>" + t("undo"), function () { if (hist.length) { cur = hist.pop(); api.say("", ""); draw(); } }));
+      area.appendChild(ops);
+    } else {
+      cur = target; hist = sol.slice();
+      var ch = el("div", "chips"); sol.forEach(function (k, i) { ch.appendChild(el("span", "chip", (i + 1) + ". " + L(OPS[k].name))); }); area.appendChild(ch);
+    }
+    draw();
+    return {
+      check: function (done) {
+        if (gk(cur) !== gk(target)) return done(false, { en: "The picture is not the same as the goal yet.", ar: "الصورة لا تطابق الهدف بعد." });
+        if (hist.length > LIMIT) return done(false, { en: "You reached the goal in " + hist.length + " steps. Can you do it in " + LIMIT + "?", ar: "وصلت إلى الهدف في " + hist.length + " خطوات. هل تستطيع في " + LIMIT + "؟" });
+        done(true);
+      },
+      reset: function () { cur = start; hist = []; draw(); },
+      facts: function () { return { n: LIMIT, ops: sol.map(function (k) { return L(OPS[k].name); }).join(S.lang === "ar" ? "، ثم " : ", then ") }; }
+    };
+  }
+
+  // ------------------------------------------------------------------ task 4: lockers
+  function count(str, s) { return Array.from(str).filter(function (c) { return c === s; }).length; }
+  function fits(bag, r) {
+    if (r.t === "has") return count(bag, r.s) > 0;
+    if (r.t === "no") return count(bag, r.s) === 0;
+    if (r.t === "count") return count(bag, r.s) === r.n;
+    if (r.t === "more") return count(bag, r.a) > count(bag, r.b);
+    return false;
+  }
+  function ruleText(r) {
+    var en, ar;
+    if (r.t === "has") { en = "has a " + shapes(r.s); ar = "فيها " + shapes(r.s); }
+    if (r.t === "no") { en = "no " + shapes(r.s); ar = "بدون " + shapes(r.s); }
+    if (r.t === "count") { en = "exactly " + r.n + " " + shapes(r.s); ar = "بالضبط " + r.n + " " + shapes(r.s); }
+    if (r.t === "more") { en = "more " + shapes(r.a) + " than " + shapes(r.b); ar = shapes(r.a) + " أكثر من " + shapes(r.b); }
+    return S.lang === "ar" ? ar : en;
+  }
+  function lockerSolutions(D) {
+    var names = Object.keys(D.beavers), out = [];
+    (function rec(i, used, acc) {
+      if (i === D.lockers.length) { out.push(acc.slice()); return; }
+      names.forEach(function (n) { if (!used[n] && fits(D.beavers[n], D.lockers[i])) { used[n] = 1; acc.push(n); rec(i + 1, used, acc); acc.pop(); used[n] = 0; } });
+    })(0, {}, []);
+    return out;
+  }
+  function mountLockers(area, D, api, mode) {
+    var names = Object.keys(D.beavers), sol = lockerSolutions(D)[0], pick = D.lockers.map(function () { return null; });
+    var bv = el("div", "beavers");
+    names.forEach(function (n) { var c = el("div", "beaver"); c.innerHTML = "<b>" + n + "</b><div class=\"bag\">" + shapes(D.beavers[n]) + "</div>"; bv.appendChild(c); });
+    var list = el("div", "lockers"), slots = [];
+    D.lockers.forEach(function (r, i) {
+      var row = el("div", "locker");
+      row.appendChild(el("span", "num", String(i + 1)));
+      row.appendChild(el("span", "rule", ruleText(r)));
+      var b = btn("", "?", function () {
+        if (mode !== "play" || api.locked()) return;
+        var idx = pick[i] == null ? 0 : names.indexOf(pick[i]) + 1;
+        pick[i] = idx >= names.length ? null : names[idx]; api.say("", ""); draw();
+      });
+      b.setAttribute("aria-label", "Locker " + (i + 1));
+      slots.push(b); row.appendChild(b); list.appendChild(row);
+    });
+    function draw() { slots.forEach(function (b, i) { b.textContent = pick[i] || "?"; b.className = pick[i] ? "set" : ""; }); }
+    area.appendChild(bv); area.appendChild(list);
+    if (mode === "solution") pick = sol.slice();
+    draw();
+    return {
+      check: function (done) {
+        if (pick.some(function (p) { return !p; })) return done(false, { en: "Every locker needs a beaver.", ar: "كل خزانة تحتاج إلى قندس." });
+        var seen = {}; for (var i = 0; i < pick.length; i++) { if (seen[pick[i]]) return done(false, { en: "Beaver " + pick[i] + " is in two lockers.", ar: "القندس " + pick[i] + " موجود في خزانتين." }); seen[pick[i]] = 1; }
+        for (var j = 0; j < pick.length; j++) if (!fits(D.beavers[pick[j]], D.lockers[j])) return done(false, { en: "Beaver " + pick[j] + " does not match the rule on locker " + (j + 1) + ".", ar: "القندس " + pick[j] + " لا يطابق قاعدة الخزانة " + (j + 1) + "." });
+        done(true);
+      },
+      reset: function () { pick = D.lockers.map(function () { return null; }); draw(); },
+      facts: function () { return { pairs: sol.map(function (n, i) { return (S.lang === "ar" ? "الخزانة " : "Locker ") + (i + 1) + ": " + n; }).join(" · ") }; }
+    };
+  }
+
+  // ------------------------------------------------------------------ task 5: neighbour swaps
+  function inversions(a) { var c = 0; for (var i = 0; i < a.length; i++) for (var j = i + 1; j < a.length; j++) if (a[i] > a[j]) c++; return c; }
+  function mountSort(area, D, api, mode) {
+    var K = inversions(D.h), arr = D.h.slice(), swaps = 0;
+    var line = el("div", "line ltr"), info = el("div", "info");
+    function draw() {
+      line.innerHTML = "";
+      arr.forEach(function (h, i) {
+        var b = el("div", "bv"); var tw = el("div", "tower", String(h)); tw.style.height = (18 + h * 16) + "px";
+        b.appendChild(el("div", "face", "🦫")); b.appendChild(tw); line.appendChild(b);
+        if (i < arr.length - 1 && mode === "play") {
+          var s = btn("swap", "⇄", function () { if (api.locked()) return; var x = arr[i]; arr[i] = arr[i + 1]; arr[i + 1] = x; swaps++; api.say("", ""); draw(); });
+          s.setAttribute("aria-label", "Swap " + (i + 1) + " and " + (i + 2)); line.appendChild(s);
+        }
+      });
+      info.textContent = t("swaps") + ": " + swaps + " / " + K;
+    }
+    area.appendChild(line); area.appendChild(info);
+    if (mode === "solution") { arr = D.h.slice().sort(function (a, b) { return a - b; }); swaps = K; }
+    draw();
+    return {
+      check: function (done) {
+        var sorted = arr.every(function (v, i) { return i === 0 || arr[i - 1] <= v; });
+        if (!sorted) return done(false, { en: "The beavers are not in order yet.", ar: "القنادس ليست مرتبة بعد." });
+        if (swaps > K) return done(false, { en: "Sorted, but you used " + swaps + " swaps. It can be done in " + K + ". Press Restart and try again.", ar: "رتبتها، لكنك استخدمت " + swaps + " تبديلات. يمكن الترتيب في " + K + ". اضغط ابدأ من جديد وحاول مرة أخرى." });
+        done(true);
+      },
+      reset: function () { arr = D.h.slice(); swaps = 0; draw(); },
+      facts: function () { return { k: K }; }
+    };
+  }
+
+  // ------------------------------------------------------------------ the five tasks
+  var TASKS = [
+    { icon: "🗺️", name: { en: "Beaver Roads", ar: "طرق القندس" }, mount: mountPath,
+      prompt: { en: "Tap the stops in order to make a route from the house 🏠 to the flag 🚩. The numbers show how long each road is. Find the shortest route. Tap the last stop again to undo it.",
+                ar: "اضغط على المحطات بالترتيب لتصنع طريقًا من البيت 🏠 إلى العلم 🚩. الأرقام تبيّن طول كل طريق. ابحث عن أقصر طريق. اضغط على آخر محطة مرة أخرى للتراجع عنها." },
+      explain: { en: "The shortest route is {route}, with a total length of {len}. The route with the fewest stops is not always the shortest: add up the numbers before you decide.",
+                 ar: "أقصر طريق هو {route}، وطوله الكلي {len}. الطريق الذي فيه أقل عدد من المحطات ليس دائمًا الأقصر، فاجمع الأرقام قبل أن تقرر." },
+      viaExplain: { en: " The route must pass through {via}, so find the shortest way to it first, then the shortest way from it to the flag.",
+                    ar: " يجب أن يمر الطريق عبر {via}، فابحث أولًا عن أقصر طريق إليه، ثم أقصر طريق منه إلى العلم." },
+      levels: [
+        { w: 320, h: 300, start: "S", end: "E", via: [], nodes: { S: [40, 150], A: [160, 55], B: [160, 245], E: [280, 150] }, edges: [["S", "A", 2], ["S", "B", 4], ["A", "E", 5], ["B", "E", 1], ["A", "B", 1]] },
+        { w: 360, h: 300, start: "S", end: "E", via: [], nodes: { S: [35, 150], A: [125, 55], B: [125, 245], C: [235, 55], D: [235, 245], E: [325, 150] }, edges: [["S", "A", 3], ["S", "B", 1], ["A", "C", 2], ["B", "D", 6], ["A", "B", 1], ["C", "E", 4], ["D", "E", 1], ["C", "D", 2], ["B", "C", 5]] },
+        { w: 380, h: 300, start: "S", end: "E", via: ["M"], nodes: { S: [35, 150], A: [115, 50], B: [115, 250], M: [190, 150], C: [270, 50], D: [270, 250], E: [345, 150] }, edges: [["S", "A", 2], ["S", "B", 3], ["A", "M", 4], ["B", "M", 2], ["A", "C", 6], ["M", "C", 1], ["M", "D", 3], ["B", "D", 4], ["C", "E", 3], ["D", "E", 1], ["S", "M", 7]] },
+        { w: 400, h: 300, start: "S", end: "E", via: ["M", "K"], nodes: { S: [30, 150], A: [100, 50], B: [100, 250], M: [180, 50], K: [180, 250], C: [235, 150], D: [300, 50], F: [300, 250], E: [370, 150] }, edges: [["S", "A", 2], ["S", "B", 2], ["A", "M", 3], ["B", "K", 3], ["A", "C", 6], ["B", "C", 6], ["M", "C", 2], ["K", "C", 2], ["M", "D", 5], ["K", "F", 5], ["C", "D", 4], ["C", "F", 4], ["D", "E", 2], ["F", "E", 2], ["M", "K", 7]] }
+      ] },
+    { icon: "🤖", name: { en: "Robot Delivery", ar: "روبوت التوصيل" }, mount: mountRobot,
+      prompt: { en: "Write a program with the arrow buttons to take the robot to the star ★, then press Run. The robot cannot pass through the dark blocks. On some levels it must also collect every apple 🍎 on the way.",
+                ar: "اكتب برنامجًا بأزرار الأسهم ليصل الروبوت إلى النجمة ★، ثم اضغط شغّل. لا يستطيع الروبوت المرور عبر المربعات الداكنة. في بعض المستويات يجب أن يجمع كل التفاح 🍎 في طريقه." },
+      explain: { en: "One correct program is {prog} ({n} steps). Plan the whole route with your finger first, then write the steps. When there are apples, choose the order that wastes the fewest steps.",
+                 ar: "من البرامج الصحيحة: {prog} ({n} خطوات). خطّط للطريق كاملًا بإصبعك أولًا، ثم اكتب الخطوات. وإذا كان هناك تفاح، اختر الترتيب الذي لا يضيّع خطوات." },
+      levels: [
+        { n: 4, start: [3, 0], goal: [0, 3], walls: [], coins: [], slack: 0 },
+        { n: 5, start: [4, 0], goal: [0, 0], walls: ["3,0", "3,1", "3,2", "1,2", "1,3", "1,4"], coins: [], slack: 1 },
+        { n: 5, start: [4, 0], goal: [0, 4], walls: ["3,1", "2,2", "1,2"], coins: [[2, 1], [1, 3]], slack: 2 },
+        { n: 5, start: [2, 2], goal: [4, 4], walls: ["1,1", "1,3", "3,1", "3,3"], coins: [[0, 0], [0, 4]], slack: 0 }
+      ] },
+    { icon: "🖼️", name: { en: "Pixel Machine", ar: "آلة البكسل" }, mount: mountPixel,
+      prompt: { en: "Use the machine buttons to change the picture until it looks exactly like the goal. Count your steps: you may only use the number shown.",
+                ar: "استخدم أزرار الآلة لتغيير الصورة حتى تطابق الهدف تمامًا. انتبه لعدد خطواتك: مسموح لك فقط بالعدد المكتوب." },
+      explain: { en: "The goal can be reached in {n} steps: {ops}. Compare one row of the picture with the same row of the goal first: has it moved, been mirrored, or have the colours been swapped?",
+                 ar: "يمكن الوصول إلى الهدف في {n} خطوات: {ops}. قارن صفًا واحدًا من الصورة بنفس الصف في الهدف أولًا: هل تحرك، أم انعكس، أم تبدلت الألوان؟" },
+      levels: [
+        { start: ["1000", "1100", "1000", "0000"], ops: ["rgt"] },
+        { start: ["1100", "1000", "1000", "1110"], ops: ["inv", "rgt"] },
+        { start: ["11000", "10000", "11100", "10000", "11000"], ops: ["mir", "inv", "lft"] },
+        { start: ["10100", "11100", "00100", "00110", "00010"], ops: ["rgt", "rgt", "inv", "mir"] }
+      ] },
+    { icon: "🔐", name: { en: "Beaver Lockers", ar: "خزائن القنادس" }, mount: mountLockers,
+      prompt: { en: "Each beaver must go to a different locker. A beaver may use a locker only if its backpack matches the rule on that locker. Tap a locker to choose a beaver for it.",
+                ar: "يجب أن يذهب كل قندس إلى خزانة مختلفة. يستطيع القندس استخدام الخزانة فقط إذا كانت حقيبته تطابق القاعدة المكتوبة عليها. اضغط على الخزانة لتختار لها قندسًا." },
+      explain: { en: "Answer: {pairs}. Start with the locker that only one beaver fits. After you place him, the other lockers have fewer choices.",
+                 ar: "الإجابة: {pairs}. ابدأ بالخزانة التي يناسبها قندس واحد فقط. بعد أن تضعه، تقل الاختيارات في باقي الخزائن." },
+      levels: [
+        { beavers: { A: "★●●", B: "■■▲", C: "●▲■" }, lockers: [{ t: "has", s: "★" }, { t: "no", s: "●" }, { t: "count", s: "■", n: 1 }] },
+        { beavers: { A: "●●▲", B: "★■●", C: "▲▲■", D: "■★★" }, lockers: [{ t: "no", s: "▲" }, { t: "count", s: "★", n: 2 }, { t: "has", s: "●" }, { t: "count", s: "▲", n: 2 }] },
+        { beavers: { A: "●▲▲■", B: "▲●●★", C: "■■●▲", D: "★▲■●" }, lockers: [{ t: "more", a: "●", b: "▲" }, { t: "more", a: "■", b: "●" }, { t: "has", s: "★" }, { t: "count", s: "▲", n: 2 }] },
+        { beavers: { A: "●●■★", B: "▲■■●", C: "★★▲●", D: "■▲▲●", E: "●★■▲" }, lockers: [{ t: "no", s: "★" }, { t: "more", a: "▲", b: "■" }, { t: "count", s: "●", n: 2 }, { t: "more", a: "★", b: "●" }, { t: "count", s: "■", n: 1 }] }
+      ] },
+    { icon: "📏", name: { en: "Line Up", ar: "الطابور" }, mount: mountSort,
+      prompt: { en: "Sort the beavers from shortest on the left to tallest on the right. You may only swap two beavers who stand next to each other (tap ⇄). Use no more swaps than the number shown.",
+                ar: "رتّب القنادس من الأقصر على اليسار إلى الأطول على اليمين. يمكنك فقط تبديل قندسين متجاورين (اضغط ⇄). لا تستخدم تبديلات أكثر من العدد المكتوب." },
+      explain: { en: "The smallest number of swaps is {k}. Count the pairs of beavers that are in the wrong order: each swap of two neighbours fixes exactly one such pair, so you need one swap per pair.",
+                 ar: "أقل عدد من التبديلات هو {k}. عُدّ أزواج القنادس التي ترتيبها خطأ: كل تبديل بين جارين يصلح زوجًا واحدًا فقط، فتحتاج تبديلًا واحدًا لكل زوج." },
+      levels: [ { h: [2, 1, 4, 3] }, { h: [3, 1, 2, 5, 4] }, { h: [4, 2, 6, 1, 5, 3] }, { h: [5, 7, 2, 6, 1, 4, 3] } ] }
+  ];
+
+  // ------------------------------------------------------------------ screens
+  var view = document.getElementById("view"), bar = document.getElementById("bar");
+  var ctrl = null;
+  function points() { return S.best.reduce(function (a, b) { return a + b * 10; }, 0); }
+  function starStr(n) { var s = ""; for (var i = 0; i < 4; i++) s += '<span class="' + (i < n ? "on" : "") + '">★</span>'; return s; }
+  function mmss(s) { return Math.floor(s / 60) + ":" + ("0" + (s % 60)).slice(-2); }
+
+  function chrome() {
+    document.documentElement.lang = S.lang; document.documentElement.dir = S.lang === "ar" ? "rtl" : "ltr";
+    document.title = t("title");
+    document.getElementById("hSchool").textContent = t("school");
+    document.getElementById("hTeacher").textContent = t("teacher");
+    document.getElementById("langBtn").textContent = t("lang");
+    document.getElementById("tLbl").textContent = t("time");
+    document.getElementById("pLbl").textContent = t("points");
+    document.getElementById("finishBtn").textContent = S.sureT ? t("sure") : t("finish");
+    document.getElementById("finishBtn").className = S.sureT ? "sure" : "";
+    document.getElementById("foot").textContent = t("foot");
+    bar.hidden = !(S.phase === "board" || (S.phase === "task" && S.mode === "play"));
+    updateBar();
+  }
+  function updateBar() {
+    document.getElementById("tVal").textContent = mmss(S.remaining);
+    document.getElementById("tStat").className = "stat" + (S.remaining <= 120 ? " low" : "");
+    document.getElementById("pVal").textContent = points();
+  }
+  function render() {
+    if (ctrl && ctrl.stop) ctrl.stop();
+    ctrl = null; view.innerHTML = ""; chrome();
+    if (S.phase === "start") return showStart();
+    if (S.phase === "board") return showBoard();
+    if (S.phase === "task") return showTask();
+    if (S.phase === "done") return showDone();
+    if (S.phase === "review") return showReview();
+  }
+
+  function showStart() {
+    var p = el("section", "panel");
+    p.appendChild(el("div", "eyebrow", "Bebras · Mawhiba"));
+    p.appendChild(el("h1", "", t("title")));
+    p.appendChild(el("p", "", t("intro")));
+    var ul = el("ul", "facts"); t("facts").forEach(function (f) { ul.appendChild(el("li", "", f)); }); p.appendChild(ul);
+    p.appendChild(el("p", "note", t("disclaimer")));
+    var r = el("div", "row"); var b = btn("btn", t("start"), startGame); b.id = "startBtn"; r.appendChild(b); p.appendChild(r);
+    view.appendChild(p);
+  }
+  function startGame() {
+    S.phase = "board"; S.remaining = 1200; S.timeUp = false;
+    clearInterval(S.timer);
+    S.timer = setInterval(function () {
+      S.remaining--; updateBar();
+      if (S.remaining <= 0) { clearInterval(S.timer); S.timeUp = true; S.phase = "done"; render(); }
+    }, 1000);
+    render();
+  }
+  function finish() {
+    if (!S.sureT) { S.sureT = setTimeout(function () { S.sureT = null; chrome(); }, 3000); chrome(); return; }
+    clearTimeout(S.sureT); S.sureT = null; clearInterval(S.timer); S.phase = "done"; render();
+  }
+  document.getElementById("finishBtn").onclick = finish;
+  document.getElementById("langBtn").onclick = function () {
+    S.lang = S.lang === "en" ? "ar" : "en";
+    try { localStorage.setItem("bebrasPracticeLang", S.lang); } catch (e) {}
+    render();
+  };
+
+  function showBoard() {
+    var grid = el("div", "tasks");
+    TASKS.forEach(function (tk, i) {
+      var c = btn("tcard", "", function () { S.cur = { t: i, l: Math.min(S.best[i], 3) }; S.mode = "play"; S.phase = "task"; render(); });
+      c.id = "task" + i;
+      c.innerHTML = '<span class="ic">' + tk.icon + "</span><b>" + L(tk.name) + '</b><span class="stars">' + starStr(S.best[i]) + "</span>";
+      grid.appendChild(c);
+    });
+    view.appendChild(grid);
+  }
+
+  function showTask() {
+    var tk = TASKS[S.cur.t], lv = S.cur.l, D = tk.levels[lv], play = S.mode === "play", locked = false;
+    var p = el("section", "panel");
+    var head = el("div", "taskhead");
+    head.appendChild(el("h2", "", L(tk.name)));
+    head.appendChild(btn("btn small alt", play ? "‹ " + t("back") : "‹ " + t("backReview"), function () { S.phase = play ? "board" : "review"; render(); }));
+    p.appendChild(head);
+    var tabs = el("div", "tabs");
+    for (var i = 0; i < 4; i++) (function (i) {
+      var b = btn("tab" + (i === lv ? " cur" : "") + (S.solved[S.cur.t][i] ? " ok" : ""), t("level") + ' <span class="st">' + "★★★★".slice(0, i + 1) + "</span>", function () { S.cur.l = i; render(); });
+      b.id = "lv" + i; tabs.appendChild(b);
+    })(i);
+    p.appendChild(tabs);
+    p.appendChild(el("div", "instr", L(tk.prompt)));
+    var area = el("div", "play"), say = el("p", "say"); say.setAttribute("aria-live", "polite");
+    var api = {
+      locked: function () { return locked; },
+      say: function (msg, cls) { say.textContent = L(msg); say.className = "say " + (cls || ""); }
+    };
+    p.appendChild(area);
+    ctrl = tk.mount(area, D, api, play ? "play" : "solution");
+    p.appendChild(say);
+    if (play) {
+      var row = el("div", "row");
+      var chk = btn("btn", ctrl.isRun ? t("run") : t("check"), function () {
+        ctrl.check(function (ok, msg) {
+          if (ok) {
+            S.solved[S.cur.t][lv] = true; S.best[S.cur.t] = Math.max(S.best[S.cur.t], lv + 1); updateBar();
+            api.say(fmt(t("correct"), { l: lv + 1 }), "good"); tabs.children[lv].classList.add("ok");
+          } else {
+            api.say(msg || t("wrong"), "bad");
+            if (!reduced) { area.classList.remove("shake"); void area.offsetWidth; area.classList.add("shake"); }
+          }
+        });
+      });
+      chk.id = "checkBtn"; row.appendChild(chk);
+      var rs = btn("btn small alt", t("restart"), function () { ctrl.reset(); api.say("", ""); }); rs.id = "resetBtn"; row.appendChild(rs);
+      p.appendChild(row);
+    } else {
+      var f = ctrl.facts(), txt = fmt(L(tk.explain), f);
+      if (tk.viaExplain && D.via && D.via.length) txt += fmt(L(tk.viaExplain), f);
+      var ex = el("div", "explain"); ex.appendChild(el("b", "", t("explanation"))); ex.appendChild(el("p", "", txt));
+      p.appendChild(ex);
+    }
+    view.appendChild(p);
+    window.scrollTo(0, 0);
+  }
+
+  function showDone() {
+    var p = el("section", "panel");
+    p.appendChild(el("div", "eyebrow", S.timeUp ? t("timeUp") : t("doneTitle")));
+    p.appendChild(el("div", "big", points() + ' <span style="font-size:.45em">' + t("of") + " 200</span>"));
+    var g = el("div", "tasks");
+    TASKS.forEach(function (tk, i) { var c = el("div", "tcard"); c.innerHTML = '<span class="ic">' + tk.icon + "</span><b>" + L(tk.name) + '</b><span class="stars">' + starStr(S.best[i]) + "</span>"; g.appendChild(c); });
+    p.appendChild(g);
+    var r = el("div", "row");
+    var rv = btn("btn", t("review"), function () { S.phase = "review"; render(); }); rv.id = "reviewBtn"; r.appendChild(rv);
+    r.appendChild(btn("btn small alt", t("again"), reset));
+    p.appendChild(r);
+    p.appendChild(el("div", "parent", "<b>" + t("parents") + "</b>" + t("parentsText")));
+    view.appendChild(p);
+    window.scrollTo(0, 0);
+  }
+  function reset() { S.best = [0, 0, 0, 0, 0]; S.solved = []; for (var i = 0; i < 5; i++) S.solved.push([false, false, false, false]); S.phase = "start"; render(); }
+
+  function showReview() {
+    var p = el("section", "panel");
+    var head = el("div", "taskhead"); head.appendChild(el("h2", "", t("reviewTitle")));
+    head.appendChild(btn("btn small alt", "‹ " + t("score"), function () { S.phase = "done"; render(); }));
+    p.appendChild(head);
+    p.appendChild(el("p", "note", t("reviewNote")));
+    var list = el("div", "rv");
+    TASKS.forEach(function (tk, ti) {
+      var row = el("div", "rvrow");
+      row.appendChild(el("div", "rvhead", "<h3>" + tk.icon + " " + L(tk.name) + '</h3><span class="stars">' + starStr(S.best[ti]) + "</span>"));
+      var lv = el("div", "rvlv");
+      for (var i = 0; i < 4; i++) (function (i) {
+        var ok = S.solved[ti][i];
+        var b = btn(ok ? "ok" : "", t("level") + " " + (i + 1) + " · " + (ok ? "✓ " + t("solved") : "✗ " + t("notSolved")), function () { S.cur = { t: ti, l: i }; S.mode = "solution"; S.phase = "task"; render(); });
+        b.id = "rv" + ti + "_" + i; lv.appendChild(b);
+      })(i);
+      row.appendChild(lv); list.appendChild(row);
+    });
+    p.appendChild(list);
+    view.appendChild(p);
+    window.scrollTo(0, 0);
+  }
+
+  window.BebrasPractice = { bestRouteFor: function (D) { var adj = {}; D.edges.forEach(function (e) { (adj[e[0]] = adj[e[0]] || {})[e[1]] = e[2]; (adj[e[1]] = adj[e[1]] || {})[e[0]] = e[2]; }); return bestRoute(D, adj); }, TASKS: TASKS, robotBFS: robotBFS, pixelBFS: pixelBFS, lockerSolutions: lockerSolutions, inversions: inversions, parseG: parseG, OPS: OPS, state: S };
+  render();
+})();
+</script>
+
+</body>
+</html>
