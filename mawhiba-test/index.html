@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mawhiba Test Practice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@600;700;800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;600;700&display=swap">
+<style>
+/* Layout: one centred column. Header with school logo and teacher. A start screen to pick level and test,
+   then four timed sections of four questions each, a results screen, and a review of every answer. */
+:root {
+  --bg: #EEF0FA; --surface: #FFFFFF; --sunk: #E0E4F5; --ink: #1B1F3B; --muted: #565C80; --line: #BCC3E3;
+  --accent: #3D4FC4; --accent-ink: #FFFFFF; --star: #F2A900; --coral: #D9482B; --good: #13804A; --grey: #8A90B4;
+  --display: "Baloo Bhaijaan 2", "Trebuchet MS", "Segoe UI", sans-serif;
+  --body: "Atkinson Hyperlegible", "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  --r: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11142A; --surface: #1C2142; --sunk: #161A35; --ink: #ECEEFB; --muted: #A6ACD0; --line: #353C6B;
+    --accent: #8E9BFF; --accent-ink: #11142A; --star: #FFC233; --coral: #FF7A55; --good: #4FD18B; --grey: #6E76A8; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11142A; --surface: #1C2142; --sunk: #161A35; --ink: #ECEEFB; --muted: #A6ACD0; --line: #353C6B;
+  --accent: #8E9BFF; --accent-ink: #11142A; --star: #FFC233; --coral: #FF7A55; --good: #4FD18B; --grey: #6E76A8; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.5; margin: 0; }
+.app { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 12px 32px; display: flex; flex-direction: column; gap: 14px; }
+.app[dir="rtl"] { font-family: "IBM Plex Sans Arabic", var(--body); }
+button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button:focus-visible { outline: 3px solid var(--star); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--display); font-weight: 800; line-height: 1.15; margin: 0; text-wrap: balance; }
+h1 { font-size: 34px; } h2 { font-size: 24px; } h3 { font-size: 19px; }
+p { margin: 0; }
+
+.top { display: flex; align-items: center; gap: 12px; }
+.top img { width: 74px; height: auto; background: #fff; border-radius: 10px; padding: 4px; border: 1px solid var(--line); }
+.who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.who b { font-family: var(--display); font-size: 17px; line-height: 1.2; }
+.who span { font-size: 13px; color: var(--muted); }
+.langBtn { border: 2px solid var(--ink); background: var(--surface); border-radius: 999px; padding: 6px 14px; font-weight: 700; box-shadow: 0 3px 0 var(--ink); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 12px; background: var(--ink); color: var(--bg); border-radius: 12px; padding: 8px 12px; }
+.bar .stat { display: flex; flex-direction: column; line-height: 1.1; }
+.bar .stat small { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; opacity: .75; }
+.bar .stat b { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
+.bar .stat.low b { color: var(--coral); }
+.bar .sp { flex: 1; }
+.bar button { background: transparent; color: var(--bg); border: 2px solid currentColor; border-radius: 10px; padding: 6px 12px; font-weight: 700; }
+.bar button.sure { background: var(--coral); border-color: var(--coral); color: #fff; }
+
+.panel { background: var(--surface); border: 2px solid var(--ink); border-radius: var(--r); padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 5px 0 var(--ink); }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.facts { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.facts li { background: var(--sunk); border-radius: 8px; padding: 8px 10px; font-weight: 700; font-size: 15px; }
+.note { font-size: 14px; color: var(--muted); }
+.btn { background: var(--accent); color: var(--accent-ink); border: 2px solid var(--ink); border-radius: 12px; padding: 11px 18px; font-family: var(--display); font-weight: 700; font-size: 19px; box-shadow: 0 4px 0 var(--ink); }
+.btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.btn.alt { background: var(--surface); color: var(--ink); }
+.btn.small { font-size: 16px; padding: 7px 12px; box-shadow: 0 3px 0 var(--ink); }
+.btn[disabled] { opacity: .4; cursor: default; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row.end { justify-content: space-between; }
+
+.pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.choice { border: 2px solid var(--ink); background: var(--surface); border-radius: 12px; padding: 10px 12px; text-align: start; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 3px 0 var(--ink); }
+.choice b { font-family: var(--display); font-size: 19px; }
+.choice span { font-size: 14px; color: var(--muted); }
+.choice[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.choice[aria-pressed="true"] span { color: var(--accent-ink); opacity: .85; }
+
+.sechead { display: flex; align-items: center; gap: 10px; }
+.sechead .ic { width: 44px; height: 44px; border-radius: 12px; background: var(--sunk); border: 2px solid var(--ink); display: grid; place-items: center; font-size: 24px; flex: none; }
+.qnav { display: flex; gap: 8px; flex-wrap: wrap; }
+.qnav button { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--ink); background: var(--surface); font-weight: 800; position: relative; }
+.qnav button.done { background: var(--sunk); }
+.qnav button.cur { background: var(--ink); color: var(--bg); }
+.qnav button.flag::after { content: ""; position: absolute; top: -5px; inset-inline-end: -5px; width: 12px; height: 12px; border-radius: 50%; background: var(--star); border: 2px solid var(--ink); }
+.passage { background: var(--sunk); border-radius: 10px; padding: 12px 14px; border-inline-start: 5px solid var(--accent); }
+.qtext { font-weight: 700; font-size: 19px; }
+.kw { display: inline-block; margin-top: 6px; font-size: 21px; letter-spacing: .02em; }
+.kwl { border-top: 2px solid var(--ink); padding-top: 4px; margin-top: 4px; }
+.eq { direction: ltr; unicode-bidi: isolate; display: inline-block; font-weight: 800; white-space: nowrap; }
+.figwrap { display: flex; justify-content: center; }
+svg.fig { width: 100%; height: auto; max-width: 420px; display: block; }
+.opts { display: grid; gap: 10px; grid-template-columns: 1fr; }
+.opts.pics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.opt { display: flex; align-items: center; gap: 10px; border: 2px solid var(--ink); border-radius: 12px; background: var(--surface); padding: 10px 12px; text-align: start; box-shadow: 0 3px 0 var(--ink); min-height: 52px; }
+.opts.pics .opt { flex-direction: column; align-items: stretch; }
+.opt .let { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 800; background: var(--surface); color: var(--ink); }
+.opt.sel { background: var(--accent); color: var(--accent-ink); }
+.opt.sel .let { background: var(--star); color: #1B1F3B; }
+.opt.right { border-color: var(--good); box-shadow: 0 3px 0 var(--good); background: color-mix(in srgb, var(--good) 16%, var(--surface)); color: var(--ink); }
+.opt.wrong { border-color: var(--coral); box-shadow: 0 3px 0 var(--coral); background: color-mix(in srgb, var(--coral) 14%, var(--surface)); color: var(--ink); }
+.opt .mark { margin-inline-start: auto; font-weight: 800; }
+.opt svg.fig { max-width: 170px; margin: 0 auto; }
+.flagBtn { border: 2px dashed var(--ink); background: transparent; border-radius: 10px; padding: 6px 10px; font-weight: 700; font-size: 14px; }
+.flagBtn[aria-pressed="true"] { border-style: solid; background: var(--star); color: #1B1F3B; }
+.toast { background: var(--star); color: #1B1F3B; font-weight: 800; border-radius: 10px; padding: 10px 12px; text-align: center; }
+
+.big { font-family: var(--display); font-weight: 800; font-size: 56px; line-height: 1; font-variant-numeric: tabular-nums; }
+.secs { display: flex; flex-direction: column; gap: 8px; }
+.secrow { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+.secrow .lbl { font-weight: 700; }
+.secrow .val { font-weight: 800; font-variant-numeric: tabular-nums; }
+.meter { grid-column: 1 / -1; height: 12px; border-radius: 999px; background: var(--sunk); border: 2px solid var(--ink); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--accent); }
+.explain { border: 2px dashed var(--accent); border-radius: 10px; padding: 12px; }
+.explain b { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+.rvq { border-top: 2px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.rvq:first-of-type { border-top: 0; padding-top: 0; }
+.tag { display: inline-block; border-radius: 999px; padding: 2px 10px; font-weight: 800; font-size: 13px; }
+.tag.ok { background: color-mix(in srgb, var(--good) 22%, var(--surface)); color: var(--ink); }
+.tag.no { background: color-mix(in srgb, var(--coral) 22%, var(--surface)); color: var(--ink); }
+.tag.skip { background: var(--sunk); color: var(--ink); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tab { border: 2px solid var(--ink); background: var(--surface); border-radius: 10px; padding: 6px 10px; font-weight: 700; font-size: 14px; }
+.tab.cur { background: var(--ink); color: var(--bg); }
+.parent { border-top: 2px dashed var(--line); padding-top: 12px; }
+.parent b { display: block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.foot { text-align: center; font-size: 13px; color: var(--muted); }
+
+/* figure drawing */
+svg .k { stroke: var(--ink); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+svg .kt { stroke: var(--ink); fill: none; stroke-width: 1.5; }
+svg .dash { stroke: var(--muted); fill: none; stroke-width: 2; stroke-dasharray: 6 5; }
+svg .faint { stroke: var(--line); fill: none; stroke-width: 1.5; }
+svg .w { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .b { fill: var(--ink); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .g { fill: var(--grey); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .a { fill: var(--accent); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .s { fill: var(--sunk); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .gear { fill: var(--sunk); stroke: var(--ink); stroke-width: 2.5; stroke-linejoin: round; }
+svg .hole { fill: var(--ink); }
+svg .arr { stroke: var(--accent); fill: none; stroke-width: 4; stroke-linecap: round; }
+svg .mkf { fill: var(--accent); }
+svg .tx { fill: var(--ink); font: 700 17px var(--body); text-anchor: middle; dominant-baseline: central; }
+svg .tx.sm { font-size: 13px; font-weight: 700; }
+svg .tx.q { font-size: 30px; font-weight: 800; fill: var(--accent); }
+svg .sym { fill: var(--ink); font: 800 22px var(--body); text-anchor: middle; dominant-baseline: central; }
+
+@media (max-width: 420px) {
+  h1 { font-size: 28px; }
+  .top img { width: 60px; }
+  .opts.pics { gap: 8px; }
+  .opt { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .btn:active { transform: none; } }
+</style>
+<style>[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="top">
+    <img id="logo" alt="Al Ekhaa Private Schools logo" src="data:image/png;base64,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">
+    <div class="who"><b id="hSchool"></b><span id="hTeacher"></span></div>
+    <button class="langBtn" id="langBtn" type="button"></button>
+  </header>
+  <div class="bar" id="bar" hidden>
+    <div class="stat"><small id="sLbl"></small><b id="sVal">1/4</b></div>
+    <div class="stat" id="tStat"><small id="tLbl"></small><b id="tVal">6:00</b></div>
+    <div class="sp"></div>
+    <button type="button" id="nextSecBtn"></button>
+  </div>
+  <main id="view"></main>
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var SEC_TIME = 360; // 6 minutes for every section of 4 questions
+
+  // ------------------------------------------------------------------ interface text
+  var TXT = {
+    en: {
+      title: "Mawhiba Test Practice", school: "Al Ekhaa International Schools", teacher: "Prepared by Mr. Ahmed · Mawhiba, Elementary Stage",
+      lang: "عربي",
+      intro: "Practice questions in the style of the Mawhiba Multiple Mental Abilities Test. Choose your level and a test. You will answer 4 sections, with 4 questions and 6 minutes in each section.",
+      levelQ: "1. Choose your level", testQ: "2. Choose a test",
+      l1: "Level 1", l1s: "Grades 3, 4 and 5", l2: "Level 2", l2s: "Grade 6",
+      tA: "Test A", tAs: "Start with this one", tB: "Test B", tBs: "A second test, a bit different",
+      facts: ["4 sections × 4 questions", "6 minutes for each section", "You can move between questions in a section", "When a section ends, you cannot go back to it"],
+      start: "Start", section: "Section", time: "Time", nextSec: "Next section", finishTest: "Finish", sure: "Tap again",
+      question: "Question", of: "of", prev: "Previous", next: "Next", flag: "Mark to check later", flagged: "Marked",
+      secUp: "Time is up for this section. On to the next one!",
+      doneTitle: "Test finished", score: "Your score", bySection: "Your score in each section", timeUsed: "Time used",
+      msgHi: "Excellent work! You are ready. Keep practising to stay sharp.", msgMid: "Good work! Look at the answers and see which section needs more practice.", msgLo: "A good start. Read the explanations carefully, then try the other test.",
+      review: "See the answers", other: "Try the other test", again: "Back to start",
+      reviewTitle: "Answers and explanations", all: "All", yourAns: "Your answer", correctAns: "Correct answer", none: "No answer",
+      ok: "Correct", no: "Wrong", skip: "Not answered", explanation: "Explanation", backRes: "Back to results",
+      disclaimer: "Practice questions written by Mr. Ahmed in the style of the test. They are not official Mawhiba questions.",
+      parents: "For parents",
+      parentsText: "The real test is taken on a computer at a Qiyas test centre, in Arabic or in English (the language chosen when booking). Level 1 (Grades 3–5) has 64 questions and Level 2 (Grades 6–8) has 96. Official sample tests are on the Mawhiba website. Please send a screenshot of the result page to Mr. Ahmed.",
+      foot: "Mr. Ahmed · Al Ekhaa International Schools"
+    },
+    ar: {
+      title: "تدريب مقياس موهبة", school: "مدارس الإخاء – القسم الدولي", teacher: "إعداد أ. أحمد · موهبة، المرحلة الابتدائية",
+      lang: "English",
+      intro: "أسئلة تدريبية على نمط مقياس موهبة للقدرات العقلية المتعددة. اختر مستواك واختر اختبارًا. ستجيب عن 4 أقسام، في كل قسم 4 أسئلة و6 دقائق.",
+      levelQ: "1. اختر مستواك", testQ: "2. اختر اختبارًا",
+      l1: "المستوى الأول", l1s: "الصفوف 3 و4 و5", l2: "المستوى الثاني", l2s: "الصف السادس",
+      tA: "الاختبار أ", tAs: "ابدأ بهذا", tB: "الاختبار ب", tBs: "اختبار ثانٍ مختلف قليلًا",
+      facts: ["4 أقسام × 4 أسئلة", "6 دقائق لكل قسم", "تستطيع التنقل بين أسئلة القسم", "عندما ينتهي القسم لا يمكنك الرجوع إليه"],
+      start: "ابدأ", section: "القسم", time: "الوقت", nextSec: "القسم التالي", finishTest: "إنهاء", sure: "اضغط مرة أخرى",
+      question: "السؤال", of: "من", prev: "السابق", next: "التالي", flag: "علّمه لأراجعه", flagged: "مُعلَّم",
+      secUp: "انتهى وقت هذا القسم. ننتقل إلى القسم التالي!",
+      doneTitle: "انتهى الاختبار", score: "نتيجتك", bySection: "نتيجتك في كل قسم", timeUsed: "الوقت المستخدم",
+      msgHi: "عمل ممتاز! أنت جاهز. استمر في التدريب لتبقى في أفضل مستوى.", msgMid: "عمل جيد! راجع الإجابات واعرف أي قسم يحتاج إلى تدريب أكثر.", msgLo: "بداية جيدة. اقرأ الشرح بعناية، ثم جرّب الاختبار الآخر.",
+      review: "شاهد الإجابات", other: "جرّب الاختبار الآخر", again: "العودة للبداية",
+      reviewTitle: "الإجابات والشرح", all: "الكل", yourAns: "إجابتك", correctAns: "الإجابة الصحيحة", none: "لا توجد إجابة",
+      ok: "صحيحة", no: "خاطئة", skip: "لم تُجب", explanation: "الشرح", backRes: "رجوع للنتيجة",
+      disclaimer: "أسئلة تدريبية من إعداد أ. أحمد على نمط الاختبار، وليست أسئلة رسمية من موهبة.",
+      parents: "لأولياء الأمور",
+      parentsText: "الاختبار الحقيقي يُؤدّى على الحاسب في أحد مراكز قياس، باللغة العربية أو الإنجليزية (حسب اللغة المختارة عند الحجز). المستوى الأول (الصفوف 3–5) فيه 64 سؤالًا، والمستوى الثاني (الصفوف 6–8) فيه 96 سؤالًا. توجد نماذج اختبارات رسمية في موقع موهبة. نرجو إرسال صورة من صفحة النتيجة إلى أ. أحمد.",
+      foot: "أ. أحمد · مدارس الإخاء"
+    }
+  };
+  var SECS = [
+    { ic: "📖", en: "Verbal reasoning and reading", ar: "الاستدلال اللغوي وفهم المقروء" },
+    { ic: "📐", en: "Math and spatial reasoning", ar: "الاستدلال الرياضي والمكاني" },
+    { ic: "⚙️", en: "Scientific and mechanical reasoning", ar: "الاستدلال العلمي والميكانيكي" },
+    { ic: "🧩", en: "Mental flexibility", ar: "المرونة العقلية" }
+  ];
+  var LET = { en: ["A", "B", "C", "D"], ar: ["أ", "ب", "ج", "د"] };
+
+  // ------------------------------------------------------------------ small helpers
+  var S = { lang: "en", phase: "start", level: "L1", set: "A", sec: 0, qi: 0, ans: {}, flags: {}, left: SEC_TIME, used: [0, 0, 0, 0], timer: null, sureT: null, toast: "", rvSec: -1 };
+  try { var sv = localStorage.getItem("mawhibaTestLang"); if (sv === "ar" || sv === "en") S.lang = sv; } catch (e) {}
+  function t(k) { return TXT[S.lang][k]; }
+  function L(o) { return o == null ? "" : (typeof o === "string" ? o : (o[S.lang] != null ? o[S.lang] : o.en)); }
+  function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+  function btn(cls, html, fn) { var b = el("button", cls, html); b.type = "button"; if (fn) b.onclick = fn; return b; }
+  function eq(s) { return '<span class="eq">' + s + "</span>"; }
+  function mmss(s) { s = Math.max(0, s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function r1(n) { return Math.round(n * 10) / 10; }
+  var mkN = 0;
+
+  // ------------------------------------------------------------------ figure helpers (all return SVG markup)
+  function svg(w, h, body, label, maxw) {
+    return '<svg class="fig" viewBox="0 0 ' + w + " " + h + '" role="img" aria-label="' + (label || "") + '"' + (maxw ? ' style="max-width:' + maxw + 'px"' : "") + ">" + body + "</svg>";
+  }
+  function txt(x, y, s, cls) { return '<text class="tx ' + (cls || "") + '" x="' + x + '" y="' + y + '">' + s + "</text>"; }
+  function marker() {
+    var id = "mk" + (++mkN);
+    return { id: id, defs: '<defs><marker id="' + id + '" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path class="mkf" d="M0,0 L10,5 L0,10 z"/></marker></defs>' };
+  }
+  function gearPath(cx, cy, r, n) {
+    var ro = r + 7, st = 2 * Math.PI / n, pts = [];
+    for (var i = 0; i < n; i++) {
+      var a = i * st - Math.PI / 2;
+      [[r, 0], [ro, 0.15], [ro, 0.45], [r, 0.6]].forEach(function (p) { pts.push([cx + p[0] * Math.cos(a + st * p[1]), cy + p[0] * Math.sin(a + st * p[1])]); });
+    }
+    return '<path class="gear" d="M' + pts.map(function (p) { return r1(p[0]) + "," + r1(p[1]); }).join(" L") + ' Z"/><circle class="w" cx="' + cx + '" cy="' + cy + '" r="' + Math.max(5, r * 0.22) + '"/>';
+  }
+  function turnArrow(cx, cy, R, cw, mk) {
+    function pt(deg) { var a = deg * Math.PI / 180; return r1(cx + R * Math.cos(a)) + "," + r1(cy + R * Math.sin(a)); }
+    var from = cw ? -165 : -50, to = cw ? -50 : -165;
+    return '<path class="arr" marker-end="url(#' + mk.id + ')" d="M' + pt(from) + " A" + R + "," + R + " 0 0 " + (cw ? 1 : 0) + " " + pt(to) + '"/>';
+  }
+  // cells: [[x,y],...] ; black: optional [x,y] cell drawn black
+  function cellsSvg(cells, size, ox, oy, black) {
+    return cells.map(function (c) {
+      var isB = black && c[0] === black[0] && c[1] === black[1];
+      return '<rect class="' + (isB ? "b" : "a") + '" x="' + (ox + c[0] * size) + '" y="' + (oy + c[1] * size) + '" width="' + size + '" height="' + size + '" rx="2"/>';
+    }).join("");
+  }
+  function bbox(cells) { var mx = 0, my = 0; cells.forEach(function (c) { mx = Math.max(mx, c[0]); my = Math.max(my, c[1]); }); return [mx + 1, my + 1]; }
+  function shapeFig(shape, size, label) {
+    var bb = bbox(shape.c), w = bb[0] * size, h = bb[1] * size, pad = 8;
+    var W = Math.max(w, h) + pad * 2;
+    return svg(W, W, cellsSvg(shape.c, size, (W - w) / 2, (W - h) / 2, shape.b), label || "", Math.round(W * 1.25));
+  }
+  // transformations on shapes {c: cells, b: black cell or null}
+  function norm(sh) {
+    var mx = Infinity, my = Infinity; sh.c.forEach(function (c) { mx = Math.min(mx, c[0]); my = Math.min(my, c[1]); });
+    var f = function (c) { return [c[0] - mx, c[1] - my]; };
+    return { c: sh.c.map(f).sort(function (a, b) { return a[1] - b[1] || a[0] - b[0]; }), b: sh.b ? f(sh.b) : null };
+  }
+  function tf(sh, fn) { var bb = bbox(sh.c); return norm({ c: sh.c.map(function (c) { return fn(c, bb); }), b: sh.b ? fn(sh.b, bb) : null }); }
+  function flipH(sh) { return tf(sh, function (c, bb) { return [bb[0] - 1 - c[0], c[1]]; }); }
+  function flipV(sh) { return tf(sh, function (c, bb) { return [c[0], bb[1] - 1 - c[1]]; }); }
+  function rotCW(sh) { return tf(sh, function (c, bb) { return [bb[1] - 1 - c[1], c[0]]; }); }
+  function key(sh) { sh = norm(sh); return JSON.stringify(sh.c) + "|" + JSON.stringify(sh.b); }
+
+  // paper square with holes (coordinates in a 0..100 square)
+  function paper(holes, ox, oy, s, creases) {
+    var k = s / 100, out = '<rect class="w" x="' + ox + '" y="' + oy + '" width="' + s + '" height="' + s + '"/>';
+    (creases || []).forEach(function (c) {
+      out += c === "v" ? '<line class="faint" x1="' + (ox + s / 2) + '" y1="' + oy + '" x2="' + (ox + s / 2) + '" y2="' + (oy + s) + '"/>'
+        : '<line class="faint" x1="' + ox + '" y1="' + (oy + s / 2) + '" x2="' + (ox + s) + '" y2="' + (oy + s / 2) + '"/>';
+    });
+    holes.forEach(function (h) { out += '<circle class="hole" cx="' + r1(ox + h[0] * k) + '" cy="' + r1(oy + h[1] * k) + '" r="6"/>'; });
+    return out;
+  }
+  function holeOpt(holes, creases) { return { fig: function () { return svg(120, 120, paper(holes, 10, 10, 100, creases)); } }; }
+
+  function arrowShape(cx, cy, deg, cls, sc) {
+    sc = sc || 1;
+    var pts = [[0, -20], [14, -4], [6, -4], [6, 20], [-6, 20], [-6, -4], [-14, -4]].map(function (p) { return r1(p[0] * sc) + "," + r1(p[1] * sc); }).join(" ");
+    return '<polygon class="' + cls + '" points="' + pts + '" transform="translate(' + cx + "," + cy + ") rotate(" + deg + ')"/>';
+  }
+  function smallShape(kind, cx, cy, s) {
+    if (kind === "c") return '<circle class="a" cx="' + cx + '" cy="' + cy + '" r="' + s / 2 + '"/>';
+    if (kind === "s") return '<rect class="a" x="' + (cx - s / 2) + '" y="' + (cy - s / 2) + '" width="' + s + '" height="' + s + '"/>';
+    return '<polygon class="a" points="' + cx + "," + (cy - s / 2) + " " + (cx + s / 2) + "," + (cy + s / 2) + " " + (cx - s / 2) + "," + (cy + s / 2) + '"/>';
+  }
+  function groupCell(kind, n, ox, oy, size) {
+    var s = 15, gap = 4, tot = n * s + (n - 1) * gap, x0 = ox + (size - tot) / 2 + s / 2, out = "";
+    for (var i = 0; i < n; i++) out += smallShape(kind, x0 + i * (s + gap), oy + size / 2, s);
+    return out;
+  }
+  var SEGS = { top: [0, 0, 1, 0], bottom: [0, 1, 1, 1], left: [0, 0, 0, 1], right: [1, 0, 1, 1], d1: [0, 0, 1, 1], d2: [1, 0, 0, 1], h: [0, .5, 1, .5], v: [.5, 0, .5, 1] };
+  function segCell(list, ox, oy, s) {
+    var out = '<rect class="faint" x="' + ox + '" y="' + oy + '" width="' + s + '" height="' + s + '"/>';
+    list.forEach(function (k) { var g = SEGS[k]; out += '<line class="k" x1="' + (ox + g[0] * s) + '" y1="' + (oy + g[1] * s) + '" x2="' + (ox + g[2] * s) + '" y2="' + (oy + g[3] * s) + '" style="stroke-width:4"/>'; });
+    return out;
+  }
+  function qBox(ox, oy, s) { return '<rect class="s" x="' + ox + '" y="' + oy + '" width="' + s + '" height="' + s + '" rx="6"/>' + txt(ox + s / 2, oy + s / 2, "?", "q"); }
+
+  // isometric cubes. heights[y][x]
+  function isoCubes(heights) {
+    var a = 26, b = 15, c = 30, cubes = [];
+    heights.forEach(function (row, y) { row.forEach(function (h, x) { for (var z = 0; z < h; z++) cubes.push([x, y, z]); }); });
+    cubes.sort(function (p, q) { return (p[0] + p[1] + p[2]) - (q[0] + q[1] + q[2]) || p[2] - q[2]; });
+    var ox = 150, oy = 40 + 3 * c;
+    function P(x, y, z) { return r1(ox + (x - y) * a) + "," + r1(oy + (x + y) * b - z * c); }
+    var out = "";
+    cubes.forEach(function (p) {
+      var x = p[0], y = p[1], z = p[2];
+      out += '<polygon class="w" points="' + [P(x, y, z + 1), P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)].join(" ") + '"/>';
+      out += '<polygon class="s" points="' + [P(x, y + 1, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x, y + 1, z)].join(" ") + '"/>';
+      out += '<polygon class="g" points="' + [P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x + 1, y, z)].join(" ") + '"/>';
+    });
+    return out;
+  }
+
+  // circuits for options
+  function circuit(kind) {
+    var o = "";
+    var L = 25, R = 125, T = 22, B = 92;
+    // wires: top (with bulb), right, bottom (with switch), left (with battery)
+    o += '<line class="k" x1="' + L + '" y1="' + T + '" x2="63" y2="' + T + '"/><line class="k" x1="87" y1="' + T + '" x2="' + R + '" y2="' + T + '"/>';
+    o += '<circle class="w" cx="75" cy="' + T + '" r="12"/><line class="k" x1="67" y1="14" x2="83" y2="30"/><line class="k" x1="83" y1="14" x2="67" y2="30"/>';
+    if (kind === "gap") o += '<line class="k" x1="' + R + '" y1="' + T + '" x2="' + R + '" y2="47"/><line class="k" x1="' + R + '" y1="63" x2="' + R + '" y2="' + B + '"/>';
+    else o += '<line class="k" x1="' + R + '" y1="' + T + '" x2="' + R + '" y2="' + B + '"/>';
+    o += '<line class="k" x1="' + R + '" y1="' + B + '" x2="88" y2="' + B + '"/><line class="k" x1="62" y1="' + B + '" x2="' + L + '" y2="' + B + '"/>';
+    o += '<circle class="b" cx="62" cy="' + B + '" r="3"/><circle class="b" cx="88" cy="' + B + '" r="3"/>';
+    o += kind === "open" ? '<line class="k" x1="62" y1="' + B + '" x2="84" y2="' + (B - 16) + '"/>' : '<line class="k" x1="62" y1="' + B + '" x2="88" y2="' + B + '"/>';
+    if (kind === "nobat") o += '<line class="k" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + B + '"/>';
+    else o += '<line class="k" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="50"/><line class="k" x1="' + L + '" y1="64" x2="' + L + '" y2="' + B + '"/>' +
+      '<line class="k" x1="' + (L - 14) + '" y1="50" x2="' + (L + 14) + '" y2="50" style="stroke-width:3.5"/><line class="k" x1="' + (L - 7) + '" y1="64" x2="' + (L + 7) + '" y2="64" style="stroke-width:6"/>';
+    return { fig: function () { return svg(150, 110, o); } };
+  }
+
+  // ------------------------------------------------------------------ figures used by the questions
+  var F = {};
+  F.gears3 = function (lang) {
+    var mk = marker(), l = LET[lang], o = mk.defs, xs = [60, 135, 210];
+    xs.forEach(function (x, i) { o += gearPath(x, 92, 30, 10) + txt(x, 152, l[i]); });
+    o += turnArrow(60, 92, 48, true, mk) + txt(210, 30, "?", "q");
+    return svg(270, 170, o, "", 360);
+  };
+  F.gearSizes = function (lang) {
+    var o = gearPath(82, 88, 52, 20) + gearPath(176, 88, 26, 10);
+    o += txt(82, 168, lang === "ar" ? "20 سنًّا" : "20 teeth", "sm") + txt(176, 168, lang === "ar" ? "10 أسنان" : "10 teeth", "sm");
+    return svg(240, 182, o);
+  };
+  F.gearBelt = function (lang) {
+    var mk = marker(), l = LET[lang], o = mk.defs;
+    [[52, 0], [118, 1], [238, 2], [304, 3]].forEach(function (g) { o += gearPath(g[0], 90, 28, 10) + txt(g[0], 150, l[g[1]]); });
+    o += '<circle class="w" cx="118" cy="90" r="14"/><circle class="w" cx="238" cy="90" r="14"/>';
+    o += '<path d="M118,72 L238,72 A18,18 0 0 1 238,108 L118,108 A18,18 0 0 1 118,72 Z" style="fill:none;stroke:var(--accent);stroke-width:6;stroke-linejoin:round"/>';
+    o += turnArrow(52, 90, 46, true, mk) + txt(304, 32, "?", "q") + txt(178, 58, lang === "ar" ? "سير" : "belt", "sm");
+    return svg(356, 166, o);
+  };
+  F.ramps = function (lang) {
+    var l = LET[lang], o = "", runs = [40, 95, 160];
+    runs.forEach(function (run, i) {
+      var y = 20 + i * 64, g = y + 46, px = 240;
+      o += txt(18, g - 18, l[i]) + '<line class="k" x1="40" y1="' + g + '" x2="300" y2="' + g + '"/>';
+      o += '<rect class="s" x="' + px + '" y="' + (g - 38) + '" width="56" height="38"/>';
+      o += '<polygon class="a" points="' + (px - run) + "," + g + " " + px + "," + (g - 38) + " " + px + "," + g + '"/>';
+    });
+    return svg(310, 216, o);
+  };
+  F.lever = function (lang) {
+    var o = "", cx = 180, u = 36;
+    o += '<polygon class="s" points="' + cx + ",90 " + (cx - 16) + ",122 " + (cx + 16) + ',122"/>';
+    o += '<rect class="w" x="' + (cx - 160) + '" y="82" width="320" height="8" rx="3"/>';
+    for (var i = 1; i <= 4; i++) {
+      o += '<line class="k" x1="' + (cx - i * u) + '" y1="90" x2="' + (cx - i * u) + '" y2="98"/>' + txt(cx - i * u, 108, i, "sm");
+      o += '<line class="k" x1="' + (cx + i * u) + '" y1="90" x2="' + (cx + i * u) + '" y2="98"/>' + txt(cx + i * u, 108, i, "sm");
+    }
+    o += '<rect class="a" x="' + (cx - 3 * u - 24) + '" y="44" width="48" height="38" rx="4"/>' + '<text class="tx sm" x="' + (cx - 3 * u) + '" y="63" style="fill:var(--accent-ink)">20 kg</text>';
+    o += '<rect class="s" x="' + (cx + 2 * u - 4) + '" y="8" width="62" height="34" rx="4" style="stroke-dasharray:5 4"/>' + txt(cx + 2 * u + 27, 25, "30 kg ?", "sm");
+    o += txt(cx, 140, lang === "ar" ? "المسافة بالمتر" : "distance in metres", "sm");
+    return svg(360, 152, o);
+  };
+  F.fulcrum = function (lang) {
+    var l = LET[lang], o = "", mk = marker();
+    o += mk.defs + '<line class="k" x1="10" y1="140" x2="350" y2="140"/>';
+    o += '<path class="g" d="M22,96 Q30,60 66,58 Q102,60 106,96 Z"/>';
+    o += '<rect class="w" x="30" y="96" width="300" height="8" rx="3"/>';
+    [[110, 0], [190, 1], [270, 2]].forEach(function (p) {
+      o += '<polygon class="s" points="' + p[0] + ",104 " + (p[0] - 14) + ",140 " + (p[0] + 14) + ',140" style="stroke-dasharray:4 3"/>' + txt(p[0], 156, l[p[1]]);
+    });
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M318,50 L318,86"/>';
+    return svg(360, 168, o);
+  };
+  F.fold1 = function () {
+    var mk = marker(), o = mk.defs;
+    o += paper([], 10, 20, 90) + '<line class="dash" x1="55" y1="20" x2="55" y2="110"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M88,40 Q55,6 24,40"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M112,65 L136,65"/>';
+    o += '<rect class="w" x="150" y="20" width="45" height="90"/><circle class="hole" cx="' + (150 + 36) + '" cy="' + (20 + 27) + '" r="6"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M206,65 L230,65"/>' + qBox(242, 30, 70);
+    return svg(322, 126, o);
+  };
+  F.fold2 = function () {
+    var mk = marker(), o = mk.defs;
+    o += paper([], 6, 30, 80) + '<line class="dash" x1="46" y1="30" x2="46" y2="110"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M78,48 Q46,14 16,48"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M96,70 L114,70"/>';
+    o += '<rect class="w" x="128" y="30" width="40" height="80"/><line class="dash" x1="128" y1="70" x2="168" y2="70"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M176,40 Q200,70 176,100"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M204,70 L222,70"/>';
+    o += '<rect class="w" x="232" y="70" width="40" height="40"/><circle class="hole" cx="264" cy="78" r="5"/>';
+    o += '<path class="arr" marker-end="url(#' + mk.id + ')" d="M282,70 L300,70"/>' + qBox(310, 40, 60);
+    return svg(378, 124, o);
+  };
+  F.mirror = function (lang) {
+    var sh = { c: [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2], [1, 2], [0, 3]] }, o = cellsSvg(sh.c, 24, 30, 16);
+    o += '<line class="dash" x1="128" y1="6" x2="128" y2="122"/>' + txt(176, 64, lang === "ar" ? "المرآة" : "mirror", "sm");
+    return svg(220, 128, o);
+  };
+  F.netSym = function () {
+    var cells = [[1, 0, "◆"], [0, 1, "●"], [1, 1, "★"], [2, 1, "▲"], [3, 1, "■"], [1, 2, "✚"]], s = 52, o = "";
+    cells.forEach(function (c) { o += '<rect class="w" x="' + (14 + c[0] * s) + '" y="' + (8 + c[1] * s) + '" width="' + s + '" height="' + s + '"/><text class="sym" x="' + (14 + c[0] * s + s / 2) + '" y="' + (8 + c[1] * s + s / 2) + '">' + c[2] + "</text>"; });
+    return svg(236, 172, o);
+  };
+  function netOpt(cells) { return { fig: function () { var bb = bbox(cells), s = 24, w = bb[0] * s, h = bb[1] * s; return svg(140, 100, cells.map(function (c) { return '<rect class="w" x="' + ((140 - w) / 2 + c[0] * s) + '" y="' + ((100 - h) / 2 + c[1] * s) + '" width="' + s + '" height="' + s + '"/>'; }).join("")); } }; }
+  function cx_(i, n, lang) { return lang === "ar" ? n - 1 - i : i; }
+  F.arrowSeq = function (lang) {
+    var o = "", st = [[0, "w"], [90, "b"], [180, "w"]];
+    st.forEach(function (a, i) { var x = 8 + cx_(i, 4, lang) * 74; o += '<rect class="faint" x="' + x + '" y="8" width="64" height="64" rx="8"/>' + arrowShape(x + 32, 40, a[0], a[1]); });
+    o += qBox(8 + cx_(3, 4, lang) * 74, 8, 64);
+    return svg(304, 80, o);
+  };
+  function arrowOpt(deg, cls) { return { fig: function () { return svg(80, 80, '<rect class="faint" x="8" y="8" width="64" height="64" rx="8"/>' + arrowShape(40, 40, deg, cls)); } }; }
+  F.latin = function (lang) {
+    var g = [[["c", 1], ["s", 2], ["t", 3]], [["s", 3], ["t", 1], ["c", 2]], [["t", 2], ["c", 3], null]], s = 74, o = "";
+    g.forEach(function (row, y) { row.forEach(function (c, x) { var ox = 8 + cx_(x, 3, lang) * s, oy = 8 + y * s; o += c ? '<rect class="faint" x="' + ox + '" y="' + oy + '" width="' + s + '" height="' + s + '"/>' + groupCell(c[0], c[1], ox, oy, s) : qBox(ox + 4, oy + 4, s - 8); }); });
+    return svg(238, 238, o);
+  };
+  function groupOpt(kind, n) { return { fig: function () { return svg(90, 74, '<rect class="faint" x="4" y="4" width="82" height="66"/>' + groupCell(kind, n, 4, 4 - 8, 82)); } }; }
+  F.arrowMatrix = function (lang) {
+    var fills = ["w", "g", "b"], s = 72, o = "";
+    for (var y = 0; y < 3; y++) for (var x = 0; x < 3; x++) {
+      var ox = 8 + cx_(x, 3, lang) * s, oy = 8 + y * s;
+      if (y === 2 && x === 2) { o += qBox(ox + 4, oy + 4, s - 8); continue; }
+      o += '<rect class="faint" x="' + ox + '" y="' + oy + '" width="' + s + '" height="' + s + '"/>' + arrowShape(ox + s / 2, oy + s / 2, y * 90 + x * 45, fills[x], 1.2);
+    }
+    return svg(232, 232, o);
+  };
+  function arrowOpt2(deg, cls) { return { fig: function () { return svg(80, 80, '<rect class="faint" x="4" y="4" width="72" height="72"/>' + arrowShape(40, 40, deg, cls, 1.2)); } }; }
+  F.xor = function (lang) {
+    var g = [[["top", "d1"], ["top", "v"], ["d1", "v"]], [["left", "h"], ["h", "d2"], ["left", "d2"]], [["right", "d1", "bottom"], ["d1", "top"], null]], s = 60, gap = 16, o = "";
+    g.forEach(function (row, y) { row.forEach(function (c, x) { var ox = 10 + cx_(x, 3, lang) * (s + gap), oy = 10 + y * (s + gap); o += c ? segCell(c, ox, oy, s) : qBox(ox, oy, s); }); });
+    return svg(240, 240, o);
+  };
+  function segOpt(list) { return { fig: function () { return svg(80, 80, segCell(list, 10, 10, 60)); } }; }
+  F.mirrorClock = function (lang) {
+    var cx = 90, cy = 84, r = 62, o = '<circle class="w" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>';
+    for (var i = 0; i < 12; i++) { var a = i * 30 * Math.PI / 180, r0 = i % 3 === 0 ? r - 14 : r - 8; o += '<line class="k" x1="' + r1(cx + r0 * Math.sin(a)) + '" y1="' + r1(cy - r0 * Math.cos(a)) + '" x2="' + r1(cx + (r - 3) * Math.sin(a)) + '" y2="' + r1(cy - (r - 3) * Math.cos(a)) + '"/>'; }
+    function hand(deg, len, w) { var a = deg * Math.PI / 180; return '<line class="k" x1="' + cx + '" y1="' + cy + '" x2="' + r1(cx + len * Math.sin(a)) + '" y2="' + r1(cy - len * Math.cos(a)) + '" style="stroke-width:' + w + '"/>'; }
+    o += hand(75, 32, 6) + hand(180, 50, 4) + '<circle class="b" cx="' + cx + '" cy="' + cy + '" r="4"/>';
+    o += '<rect class="faint" x="14" y="8" width="152" height="152" rx="10" style="stroke-dasharray:6 5"/>' + txt(cx, 172, lang === "ar" ? "في المرآة" : "in the mirror", "sm");
+    return svg(180, 184, o);
+  };
+  F.iso = function () { return svg(300, 230, isoCubes([[3, 2, 1], [1, 1, 1]])); };
+
+  // ------------------------------------------------------------------ shapes for the rotation and mirror questions
+  var SH_MIRROR = { c: [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2], [1, 2], [0, 3]], b: null };
+  var SH_ROT1 = { c: [[1, 0], [2, 0], [0, 1], [1, 1], [1, 2]], b: null };
+  var SH_ROT2 = { c: [[0, 0], [1, 0], [2, 0], [0, 1], [0, 2], [1, 2], [1, 3]], b: [2, 0] };
+  function shOpt(sh) { return { fig: function () { return shapeFig(sh, 20); } }; }
+  F.rot1 = function () { return shapeFig(norm(SH_ROT1), 26); };
+  F.rot2 = function () { return shapeFig(norm(SH_ROT2), 24); };
+
+  // ------------------------------------------------------------------ questions
+  // s: section 0-3, q: question, p: reading passage, fig: figure, o: options, a: index of the correct option, x: explanation
+  function T(en, ar) { return { en: en, ar: ar }; }
+  var CW = T("Clockwise", "مع اتجاه عقارب الساعة"), ACW = T("Anticlockwise", "عكس اتجاه عقارب الساعة");
+  function LT(i) { return { en: LET.en[i], ar: LET.ar[i] }; }
+  function bold(s) { return '<b class="kw">' + s + "</b>"; }
+  var PAIR = T("Choose the pair of words that shows the same relationship as the pair of words in bold.", "المطلوب تحديد الاختيار الذي ترتبط فيه الكلمتان بنفس علاقة الكلمتين في رأس السؤال:");
+  var SEQ = T("Fill in the space with a word that completes the sequence, showing the same relationship as the words above the line.", "املأ الفراغ بكلمة تعطي علاقة مشابهة لما فوق الخط:");
+  function seqQ(a, b) { return '<b class="kw">' + a + '</b><br><b class="kw kwl">' + b + "</b>"; }
+  F.triangles = function () {
+    var o = '<polygon class="w" points="120,12 14,168 226,168"/><line class="k" x1="120" y1="12" x2="84" y2="168"/><line class="k" x1="120" y1="12" x2="156" y2="168"/>';
+    return svg(240, 180, o);
+  };
+
+  var BANK = {
+    L1: {
+      A: [
+        { s: 0, q: T(PAIR.en + "<br>" + bold("BIRD : NEST"), PAIR.ar + "<br>" + bold("طائر : عش")),
+          o: [T("fish : fin", "سمكة : زعنفة"), T("cow : milk", "بقرة : حليب"), T("bee : hive", "نحلة : خلية"), T("dog : bark", "كلب : نباح")], a: 2,
+          x: T("A bird lives in a nest, and a bee lives in a hive. The link is: an animal and its home. Say the link as a sentence first, then test each pair with the same sentence.", "الطائر يعيش في العش، والنحلة تعيش في الخلية. العلاقة هي: الحيوان ومسكنه. صُغ العلاقة في جملة أولًا، ثم جرّب الجملة نفسها على كل زوج.") },
+        { s: 0, q: T(SEQ.en + "<br>" + seqQ("BEE – FLOWER – HONEY", "COW – GRASS – ………"), SEQ.ar + "<br>" + seqQ("نحلة – زهرة – عسل", "بقرة – عشب – ………")),
+          o: [T("field", "حقل"), T("farmer", "مزارع"), T("wool", "صوف"), T("milk", "حليب")], a: 3,
+          x: T("The pattern is: an animal – what it feeds on – what it gives us. The bee feeds on flowers and gives us honey; the cow eats grass and gives us milk. Wool comes from sheep, not cows.", "النمط هو: حيوان – ما يتغذى عليه – ما يعطينا إياه. النحلة تتغذى على الزهر وتعطينا العسل، والبقرة تأكل العشب وتعطينا الحليب. أما الصوف فمن الخروف لا من البقرة.") },
+        { s: 0, p: T("Omar planted three bean seeds in three cups. He put the first cup by a sunny window, the second in a dark cupboard, and the third in the fridge. He gave all three cups the same amount of water. After a week, only the seed by the window had grown into a tall green plant.",
+            "زرع عمر ثلاث بذور فاصولياء في ثلاثة أكواب. وضع الكوب الأول بجانب نافذة مشمسة، والثاني في خزانة مظلمة، والثالث في الثلاجة. وسقى الأكواب الثلاثة بنفس كمية الماء. بعد أسبوع، نمت البذرة التي بجانب النافذة فقط وأصبحت نبتة خضراء طويلة."),
+          q: T("What was Omar most likely trying to find out?", "ما الذي كان عمر يحاول أن يعرفه على الأرجح؟"),
+          o: [T("Whether light and warmth help seeds grow", "هل يساعد الضوء والدفء البذور على النمو"), T("Which cup is the biggest", "أي الأكواب هو الأكبر"), T("How cold the fridge gets", "كم تبلغ برودة الثلاجة"), T("How much water a seed needs", "كم من الماء تحتاج البذرة")], a: 0,
+          x: T("Omar changed only one thing between the cups: the place (light and warm, dark, or cold). He kept the water the same, so he was not testing water. He was testing light and warmth.", "غيّر عمر شيئًا واحدًا فقط بين الأكواب: المكان (ضوء ودفء، أو ظلام، أو برد)، وأبقى الماء متساويًا. إذن لم يكن يختبر الماء، بل كان يختبر أثر الضوء والدفء.") },
+        { s: 0, q: T("Faisal put on his “zumbo” before going out, because the weather was very cold. This means that a “zumbo” is probably:", "لبس فيصل «الزُّمبو» قبل أن يخرج، لأن الجو كان باردًا جدًا. هذا يعني أن «الزُّمبو» على الأرجح:"),
+          o: [T("a kind of food", "نوع من الطعام"), T("a toy", "لعبة"), T("a cold drink", "مشروب بارد"), T("a warm piece of clothing", "قطعة ملابس دافئة")], a: 3,
+          x: T("“Zumbo” is not a real word, so we use the clues: he put it on, and the weather was cold. Something you put on to keep warm is clothing.", "«الزُّمبو» ليست كلمة حقيقية، لذلك نستخدم القرائن: لبسه، والجو كان باردًا. والشيء الذي نلبسه لنشعر بالدفء هو قطعة ملابس.") },
+
+        { s: 1, q: T("What number comes next?  3, 6, 12, 24, …", "ما العدد التالي؟  3، 6، 12، 24، …"),
+          o: [T("30", "30"), T("36", "36"), T("48", "48"), T("50", "50")], a: 2,
+          x: T("Each number is double the one before it: 3 × 2 = 6, 6 × 2 = 12, 12 × 2 = 24, so 24 × 2 = 48.", "كل عدد هو ضعف العدد الذي قبله: 3 × 2 = 6، و6 × 2 = 12، و12 × 2 = 24، إذن 24 × 2 = 48.") },
+        { s: 1, q: T("A box holds 4 rows of eggs, with 6 eggs in each row. 5 eggs broke. How many eggs are not broken?", "في علبة 4 صفوف من البيض، في كل صف 6 بيضات. انكسرت 5 بيضات. كم بيضة لم تنكسر؟"),
+          o: [T("15", "15"), T("19", "19"), T("24", "24"), T("29", "29")], a: 1,
+          x: T("4 rows × 6 eggs = 24 eggs. 24 − 5 broken = 19 eggs.", "4 صفوف × 6 بيضات = 24 بيضة. ثم 24 − 5 = 19 بيضة.") },
+        { s: 1, q: T("A square of paper is folded in half, then one hole is punched through it. What does the paper look like when it is opened?", "طُويت ورقة مربعة من المنتصف، ثم ثُقبت ثقبًا واحدًا. كيف تبدو الورقة عند فتحها؟"),
+          fig: F.fold1, pics: true,
+          o: [holeOpt([[40, 30], [60, 30]], ["v"]), holeOpt([[40, 30]], ["v"]), holeOpt([[40, 30], [40, 70]], ["v"]), holeOpt([[10, 30], [90, 30]], ["v"])], a: 0,
+          x: T("The hole goes through both layers, so there are 2 holes. They sit like mirror images on each side of the fold line, at the same distance from it and at the same height.", "الثقب يمر في الطبقتين، إذن يصبح عندنا ثقبان. وهما متقابلان مثل صورة المرآة على جانبي خط الطي، على نفس البعد منه ونفس الارتفاع.") },
+        { s: 1, q: T("A mirror is placed on the dashed line. Which picture shows what you see in the mirror?", "وُضعت مرآة على الخط المتقطع. أي صورة تُظهر ما تراه في المرآة؟"),
+          fig: F.mirror, pics: true,
+          o: [shOpt(flipV(flipH(SH_MIRROR))), shOpt(flipH(SH_MIRROR)), shOpt(norm(SH_MIRROR)), shOpt(flipV(SH_MIRROR))], a: 1,
+          x: T("In a mirror, left and right swap, but top and bottom stay the same. The long bar is still at the top, but it now points to the left.", "في المرآة يتبادل اليمين واليسار، لكن الأعلى والأسفل يبقيان كما هما. الشريط الطويل يبقى في الأعلى، لكنه يتجه الآن نحو اليسار.") },
+
+        { s: 2, q: T("Gear A turns clockwise (the way a clock's hands move). Which way does gear C turn?", "الترس أ يدور مع اتجاه عقارب الساعة. في أي اتجاه يدور الترس ج؟"),
+          fig: F.gears3,
+          o: [CW, ACW, T("It does not move", "لا يتحرك"), T("Both ways at once", "في الاتجاهين معًا")], a: 0,
+          x: T("Gears that touch turn in opposite directions. A turns clockwise, so B turns anticlockwise, so C turns clockwise again.", "الترسان المتلامسان يدوران في اتجاهين متعاكسين. أ مع عقارب الساعة، إذن ب عكسها، إذن ج مع عقارب الساعة مرة أخرى.") },
+        { s: 2, q: T("Fahad is much heavier than Sami. They sit on a seesaw. Where should Fahad sit so that the seesaw balances?", "فهد أثقل بكثير من سامي. جلسا على لعبة التوازن (السي سو). أين يجب أن يجلس فهد حتى تتوازن اللعبة؟"),
+          o: [T("Closer to the middle", "أقرب إلى المنتصف"), T("At the very end", "على الطرف تمامًا"), T("On the same side as Sami", "في نفس جهة سامي"), T("It can never balance", "لا يمكن أن تتوازن أبدًا")], a: 0,
+          x: T("What matters is weight and distance together. A heavy person close to the middle can balance a light person far from the middle.", "المهم هو الوزن والمسافة معًا. الشخص الثقيل القريب من المنتصف يستطيع أن يوازن شخصًا خفيفًا بعيدًا عن المنتصف.") },
+        { s: 2, q: T("After the rain there was a puddle in the playground. In the afternoon sun it disappeared. Where did the water go?", "بعد المطر تكوّنت بركة ماء صغيرة في الساحة، وفي شمس الظهيرة اختفت. أين ذهب الماء؟"),
+          o: [T("It changed into ice", "تحوّل إلى جليد"), T("It changed into salt", "تحوّل إلى ملح"), T("It went into the air as water vapour", "صعد إلى الهواء على شكل بخار ماء"), T("It moved into the shade by itself", "انتقل وحده إلى الظل")], a: 2,
+          x: T("The heat of the sun made the water evaporate: it turned into water vapour, a gas we cannot see, and went into the air. Ice needs cold, not heat.", "حرارة الشمس جعلت الماء يتبخر، أي يتحول إلى بخار ماء لا نراه ويصعد إلى الهواء. أما التحول إلى جليد فيحتاج إلى برودة لا إلى حرارة.") },
+        { s: 2, q: T("Early in the morning, the sun is low in the sky in the east. What is your shadow like?", "في الصباح الباكر تكون الشمس منخفضة في السماء جهة الشرق. كيف يكون ظلك؟"),
+          o: [T("Short, pointing west", "قصيرًا ويتجه نحو الغرب"), T("Long, pointing east", "طويلًا ويتجه نحو الشرق"), T("You have no shadow", "لا يكون لك ظل"), T("Long, pointing west", "طويلًا ويتجه نحو الغرب")], a: 3,
+          x: T("A shadow always points away from the light. The sun is in the east, so the shadow points west. A low sun makes a long shadow; at noon, when the sun is high, the shadow is short.", "الظل يكون دائمًا في الجهة المعاكسة لمصدر الضوء. الشمس في الشرق، إذن الظل نحو الغرب. والشمس المنخفضة تصنع ظلًا طويلًا، أما في الظهيرة فتكون الشمس عالية والظل قصيرًا.") },
+
+        { s: 3, q: T("In a secret code, each shape stands for a number. " + eq("★ = 3") + " and " + eq("★ ★ ● = 11") + ". What number is ●?", "في شفرة سرية، كل شكل يساوي عددًا. " + eq("★ = 3") + " و " + eq("★ ★ ● = 11") + ". ما قيمة ●؟"),
+          o: [T("3", "3"), T("5", "5"), T("8", "8"), T("11", "11")], a: 1,
+          x: T("Two stars are 3 + 3 = 6. The whole line is 11, so ● = 11 − 6 = 5.", "نجمتان = 3 + 3 = 6. والمجموع 11، إذن ● = 11 − 6 = 5.") },
+        { s: 3, q: T("What comes next in the pattern?", "ما الشكل التالي في النمط؟"), fig: F.arrowSeq, pics: true,
+          o: [arrowOpt(270, "w"), arrowOpt(0, "w"), arrowOpt(270, "b"), arrowOpt(90, "b")], a: 2,
+          x: T("Two things change at the same time: the arrow turns a quarter turn clockwise each step (up, right, down, then left), and the colour swaps between white and black (white, black, white, then black).", "شيئان يتغيران معًا: السهم يدور ربع دورة مع عقارب الساعة في كل خطوة (أعلى، يمين، أسفل، ثم يسار)، واللون يتبدل بين الأبيض والأسود (أبيض، أسود، أبيض، ثم أسود).") },
+        { s: 3, q: T("In how many different ways can you make 10 riyals using only 5-riyal notes and 1-riyal coins?", "بكم طريقة مختلفة يمكنك أن تكوّن 10 ريالات باستخدام أوراق فئة 5 ريالات وقطع فئة ريال واحد فقط؟"),
+          o: [T("2", "2"), T("3", "3"), T("4", "4"), T("10", "10")], a: 1,
+          x: T("Two 5-riyal notes; or one 5-riyal note and five 1-riyal coins; or ten 1-riyal coins. That makes 3 ways. A good habit: list the ways in order so you don't miss one.", "ورقتان من فئة 5؛ أو ورقة 5 مع خمس قطع من فئة ريال؛ أو عشر قطع من فئة ريال. المجموع 3 طرق. عادة مفيدة: رتّب الطرق حتى لا تنسى واحدة.") },
+        { s: 3, q: T("Ahmed is facing north. He turns right, then right again, then left. Which direction is he facing now?", "أحمد ينظر نحو الشمال. استدار إلى اليمين، ثم إلى اليمين مرة أخرى، ثم إلى اليسار. إلى أي اتجاه ينظر الآن؟"),
+          o: [T("North", "الشمال"), T("South", "الجنوب"), T("East", "الشرق"), T("West", "الغرب")], a: 2,
+          x: T("North → turn right → east → turn right → south → turn left → east.", "الشمال ← يمين ← الشرق ← يمين ← الجنوب ← يسار ← الشرق.") }
+      ],
+      B: [
+        { s: 0, q: T(PAIR.en + "<br>" + bold("PEN : WRITE"), PAIR.ar + "<br>" + bold("قلم : كتابة")),
+          o: [T("paper : white", "ورق : أبيض"), T("scissors : cut", "مقص : قص"), T("teacher : school", "معلم : مدرسة"), T("ball : round", "كرة : مستديرة")], a: 1,
+          x: T("A pen is a tool we use to write, and scissors are a tool we use to cut. The link is: a tool and its job.", "القلم أداة نستخدمها للكتابة، والمقص أداة نستخدمها للقص. العلاقة هي: الأداة ووظيفتها.") },
+        { s: 0, p: T("Camels can walk for many days in the desert without drinking. Many people think a camel's hump is full of water, but it is really full of fat. The camel uses this fat for energy when there is little food. Its wide, flat feet stop it from sinking into the soft sand.",
+            "تستطيع الإبل أن تمشي أيامًا كثيرة في الصحراء دون أن تشرب. يظن كثير من الناس أن سنام الجمل مملوء بالماء، لكنه في الحقيقة مملوء بالدهون. يستخدم الجمل هذه الدهون للحصول على الطاقة عندما يقل الطعام. وأقدامه العريضة المسطحة تمنعه من الغوص في الرمل الناعم."),
+          q: T("Which sentence is TRUE according to the text?", "أي جملة صحيحة بحسب النص؟"),
+          o: [T("A camel's hump is full of water.", "سنام الجمل مملوء بالماء."), T("Camels sink into soft sand.", "الإبل تغوص في الرمل الناعم."), T("A camel's hump stores fat.", "سنام الجمل يخزّن الدهون."), T("Camels must drink every day.", "يجب أن تشرب الإبل كل يوم.")], a: 2,
+          x: T("The text says many people THINK the hump holds water, then corrects this: it is full of fat. Read the whole sentence before you choose.", "النص يقول إن كثيرًا من الناس «يظنون» أن السنام فيه ماء، ثم يصحح ذلك: هو مملوء بالدهون. اقرأ الجملة كاملة قبل أن تختار.") },
+        { s: 0, q: T("Nawaf is taller than Badr. Saud is shorter than Badr but taller than Turki. Who is the shortest?", "نواف أطول من بدر. وسعود أقصر من بدر لكنه أطول من تركي. من الأقصر؟"),
+          o: [T("Nawaf", "نواف"), T("Badr", "بدر"), T("Saud", "سعود"), T("Turki", "تركي")], a: 3,
+          x: T("Draw a line from tallest to shortest: Nawaf, Badr, Saud, Turki. Turki is the shortest.", "ارسم خطًا من الأطول إلى الأقصر: نواف، بدر، سعود، تركي. تركي هو الأقصر.") },
+        { s: 0, q: T("We wear a seatbelt in the car so that we stay safe if the car stops suddenly. We conclude from this statement that a seatbelt is used for:", "نربط حزام الأمان في السيارة لنبقى سالمين إذا توقفت السيارة فجأة. نستنتج من هذه العبارة أن حزام الأمان يُستخدم من أجل:"),
+          o: [T("protection", "الحماية"), T("decoration", "الزينة"), T("comfort", "الراحة"), T("speed", "السرعة")], a: 0,
+          x: T("The sentence says we wear it to stay safe. Keeping us safe is protection.", "العبارة تقول إننا نربطه لنبقى سالمين، والإبقاء على سلامتنا هو الحماية.") },
+
+        { s: 1, q: T("What number comes next?  5, 8, 14, 23, 35, …", "ما العدد التالي؟  5، 8، 14، 23، 35، …"),
+          o: [T("47", "47"), T("48", "48"), T("50", "50"), T("52", "52")], a: 2,
+          x: T("Look at the jumps: +3, +6, +9, +12. The next jump is +15, so 35 + 15 = 50.", "انظر إلى مقدار الزيادة: +3، +6، +9، +12. الزيادة التالية +15، إذن 35 + 15 = 50.") },
+        { s: 1, q: T("Yousef is 3 years older than Ali. In 5 years, their ages will add up to 25. How old is Ali now?", "يوسف أكبر من علي بـ 3 سنوات. بعد 5 سنوات سيكون مجموع عمريهما 25 سنة. كم عمر علي الآن؟"),
+          o: [T("5", "5"), T("6", "6"), T("8", "8"), T("11", "11")], a: 1,
+          x: T("In 5 years each boy is 5 years older, so the total grows by 10. Their total now is 25 − 10 = 15. Ali + (Ali + 3) = 15, so Ali = 6 and Yousef = 9. Check: in 5 years, 11 + 14 = 25.", "بعد 5 سنوات يكبر كل واحد 5 سنوات، فيزيد المجموع 10. مجموعهما الآن 25 − 10 = 15. علي + (علي + 3) = 15، إذن علي = 6 ويوسف = 9. للتحقق: بعد 5 سنوات 11 + 14 = 25.") },
+        { s: 1, q: T("Which picture shows the same shape, only turned (not flipped)?", "أي صورة هي نفس الشكل بعد تدويره فقط (وليس قلبه)؟"), fig: F.rot1, pics: true,
+          o: [shOpt(flipH(SH_ROT1)), shOpt(rotCW(SH_ROT1)), shOpt(rotCW(flipH(SH_ROT1))), shOpt(flipV(SH_ROT1))], a: 1,
+          x: T("Picture B is the shape turned a quarter turn clockwise. The other three are the shape flipped over, like a mirror image, and no turning can make the original look like them.", "الصورة ب هي الشكل بعد تدويره ربع دورة مع عقارب الساعة. أما الصور الثلاث الأخرى فهي الشكل مقلوبًا مثل صورة المرآة، ولا يمكن لأي تدوير أن يجعل الشكل الأصلي مثلها.") },
+        { s: 1, q: T("Which net can be folded to make a cube?", "أي شبكة يمكن طيّها لتكوين مكعب؟"), pics: true,
+          o: [netOpt([[0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [2, 1]]), netOpt([[2, 0], [0, 1], [1, 1], [2, 1], [3, 1], [4, 1]]), netOpt([[0, 0], [3, 0], [0, 1], [1, 1], [2, 1], [3, 1]]), netOpt([[1, 0], [0, 1], [1, 1], [2, 1], [3, 1], [1, 2]])], a: 3,
+          x: T("A cube has 6 faces. A net cannot have 5 squares in a row, a full 2 × 2 block, or two squares that fold onto the same face. Net D (a row of 4 with one square above and one below) folds into a cube.", "للمكعب 6 أوجه. ولا يمكن أن تحتوي الشبكة على 5 مربعات في صف واحد، ولا على مربع كامل 2 × 2، ولا على مربعين ينطويان على نفس الوجه. الشبكة د (صف من 4 مع مربع فوقه ومربع تحته) تُكوّن مكعبًا.") },
+
+        { s: 2, q: T("The big gear has 20 teeth. The small gear has 10 teeth. When the big gear turns around once, how many times does the small gear turn?", "الترس الكبير له 20 سنًّا، والترس الصغير له 10 أسنان. عندما يدور الترس الكبير دورة واحدة، كم دورة يدور الترس الصغير؟"),
+          fig: F.gearSizes,
+          o: [T("Half a turn", "نصف دورة"), T("1 turn", "دورة واحدة"), T("2 turns", "دورتان"), T("10 turns", "10 دورات")], a: 2,
+          x: T("Each tooth of the big gear pushes one tooth of the small gear. In one turn, 20 teeth pass. The small gear has only 10 teeth, so it turns 20 ÷ 10 = 2 times. Small gears turn faster.", "كل سن في الترس الكبير يدفع سنًّا في الترس الصغير. في دورة واحدة يمر 20 سنًّا، والترس الصغير له 10 أسنان فقط، إذن يدور 20 ÷ 10 = 2 دورة. الترس الصغير يدور أسرع.") },
+        { s: 2, q: T("Sultan wants to push a heavy box up onto the same stage. Which ramp needs the least pushing force?", "يريد سلطان أن يدفع صندوقًا ثقيلًا إلى أعلى المنصة نفسها. أي منحدر يحتاج إلى أقل قوة دفع؟"),
+          fig: F.ramps,
+          o: [LT(0), LT(1), LT(2), T("They all need the same force", "كلها تحتاج نفس القوة")], a: 2,
+          x: T("All the ramps reach the same height. The longest, gentlest ramp (C) needs the least force, but you push the box over a longer distance.", "كل المنحدرات تصل إلى نفس الارتفاع. المنحدر الأطول والأقل ميلًا (ج) يحتاج إلى أقل قوة، لكنك تدفع الصندوق مسافة أطول.") },
+        { s: 2, q: T("Which object will a magnet pick up?", "أي شيء يجذبه المغناطيس؟"),
+          o: [T("An iron nail", "مسمار حديد"), T("A plastic spoon", "ملعقة بلاستيك"), T("A wooden pencil", "قلم خشب"), T("A glass marble", "كرة زجاجية")], a: 0,
+          x: T("Magnets attract things made of iron (and some other metals such as nickel). Plastic, wood and glass are not attracted.", "المغناطيس يجذب الأشياء المصنوعة من الحديد (وبعض الفلزات الأخرى مثل النيكل)، ولا يجذب البلاستيك ولا الخشب ولا الزجاج.") },
+        { s: 2, q: T("Bader wants to find out which ball bounces highest. To make his test fair, what must he keep the same for every ball?", "يريد بدر أن يعرف أي كرة ترتد إلى أعلى ارتفاع. لكي تكون تجربته عادلة، ما الذي يجب أن يبقيه ثابتًا لكل الكرات؟"),
+          o: [T("The type of ball", "نوع الكرة"), T("The colour of each ball", "لون كل كرة"), T("The number of friends watching", "عدد الأصدقاء الذين يشاهدون"), T("The height he drops them from", "الارتفاع الذي يُسقطها منه")], a: 3,
+          x: T("In a fair test you change only the thing you are testing (the type of ball) and keep everything else the same. If one ball is dropped from higher up, it will bounce higher, and the test will not be fair.", "في التجربة العادلة نغيّر شيئًا واحدًا فقط هو ما نختبره (نوع الكرة)، ونُبقي كل شيء آخر ثابتًا. لو أُسقطت كرة من مكان أعلى لارتدت أعلى، ولن تكون التجربة عادلة.") },
+
+        { s: 3, q: T(eq("■ + ■ = 8") + " and " + eq("■ + ▲ = 10") + ". What is ▲?", eq("■ + ■ = 8") + " و " + eq("■ + ▲ = 10") + ". ما قيمة ▲؟"),
+          o: [T("2", "2"), T("4", "4"), T("6", "6"), T("8", "8")], a: 2,
+          x: T("Two squares make 8, so ■ = 4. Then 4 + ▲ = 10, so ▲ = 6.", "مربعان = 8، إذن ■ = 4. ثم 4 + ▲ = 10، إذن ▲ = 6.") },
+        { s: 3, q: T("Which picture is missing?", "ما الصورة الناقصة؟"), fig: F.latin, pics: true,
+          o: [groupOpt("s", 1), groupOpt("s", 2), groupOpt("t", 1), groupOpt("s", 3)], a: 0,
+          x: T("Every row and every column has circles, squares and triangles once each, and has 1, 2 and 3 shapes once each. The last row has triangles and circles, and 2 and 3 shapes, so the missing picture is 1 square.", "كل صف وكل عمود فيه دوائر ومربعات ومثلثات مرة واحدة، وفيه شكل واحد وشكلان وثلاثة أشكال مرة واحدة. الصف الأخير فيه مثلثات ودوائر، وفيه 2 و3، إذن الصورة الناقصة مربع واحد.") },
+        { s: 3, q: T("A clock shows 3:00. The minute hand goes around the clock 2 and a half times. What time is it now?", "تشير الساعة إلى 3:00. دار عقرب الدقائق دورتين ونصفًا. كم الساعة الآن؟"),
+          o: [T("4:30", "4:30"), T("5:00", "5:00"), T("5:30", "5:30"), T("6:30", "6:30")], a: 2,
+          x: T("One full turn of the minute hand is 1 hour. 2 and a half turns are 2 hours and 30 minutes. 3:00 + 2 h 30 min = 5:30.", "الدورة الكاملة لعقرب الدقائق = ساعة واحدة. دورتان ونصف = ساعتان و30 دقيقة. 3:00 + ساعتان و30 دقيقة = 5:30.") },
+        { s: 3, q: T("How many triangles can you find in this picture?", "كم مثلثًا تجد في هذه الصورة؟"), fig: F.triangles,
+          o: [T("3", "3"), T("4", "4"), T("5", "5"), T("6", "6")], a: 3,
+          x: T("Look in more than one way. Small triangles: 3. Triangles made of 2 small ones side by side: 2. The whole big triangle: 1. Total 3 + 2 + 1 = 6.", "انظر بأكثر من طريقة. المثلثات الصغيرة: 3. المثلثات المكونة من مثلثين صغيرين متجاورين: 2. المثلث الكبير كله: 1. المجموع 3 + 2 + 1 = 6.") }
+      ]
+    },
+    L2: {
+      A: [
+        { s: 0, q: T(PAIR.en + "<br>" + bold("THERMOMETER : TEMPERATURE"), PAIR.ar + "<br>" + bold("مقياس الحرارة : درجة الحرارة")),
+          o: [T("ruler : length", "مسطرة : طول"), T("doctor : fever", "طبيب : حمّى"), T("clock : wall", "ساعة : جدار"), T("kitchen : cooking", "مطبخ : طبخ")], a: 0,
+          x: T("A thermometer is a tool that measures temperature, and a ruler is a tool that measures length. The link is: a measuring tool and what it measures. A doctor checks a fever, but a doctor is a person, not a measuring tool.", "مقياس الحرارة أداة تقيس درجة الحرارة، والمسطرة أداة تقيس الطول. العلاقة هي: أداة القياس وما تقيسه. الطبيب يفحص الحمّى، لكنه شخص وليس أداة قياس.") },
+        { s: 0, q: T(SEQ.en + "<br>" + seqQ("DROP – STREAM – RIVER", "BREEZE – ……… – STORM"), SEQ.ar + "<br>" + seqQ("قطرة – جدول – نهر", "نسيم – ……… – عاصفة")),
+          o: [T("rain", "مطر"), T("calm", "هدوء"), T("wind", "ريح"), T("cloud", "غيمة")], a: 2,
+          x: T("The words above the line grow stronger step by step: drop, stream, river. Below the line: breeze (light), wind (stronger), storm (strongest). Rain and cloud are about weather but do not fit the 'stronger and stronger air' pattern.", "الكلمات فوق الخط تزداد قوة خطوة بعد خطوة: قطرة، جدول، نهر. وتحت الخط: نسيم (خفيف)، ريح (أقوى)، عاصفة (الأقوى). المطر والغيمة من الطقس، لكنهما لا يناسبان نمط «هواء يزداد قوة».") },
+        { s: 0, p: T("Bats hunt insects at night, when it is too dark to see well. As it flies, a bat makes very high sounds. The sounds hit an insect and bounce back to the bat's ears as an echo. From the echo, the bat can tell where the insect is and how fast it is moving. That is why people say bats 'see with their ears'.",
+            "تصطاد الخفافيش الحشرات في الليل، عندما يكون الظلام شديدًا ولا تستطيع الرؤية جيدًا. يُصدر الخفاش أثناء طيرانه أصواتًا حادة جدًا، تصطدم بالحشرة وترتد إلى أذنيه على شكل صدى. ومن الصدى يعرف الخفاش مكان الحشرة وسرعة حركتها. لهذا يقول الناس إن الخفافيش «ترى بآذانها»."),
+          q: T("What does 'see with their ears' mean in the passage?", "ما معنى «ترى بآذانها» في النص؟"),
+          o: [T("Bats have eyes inside their ears.", "للخفافيش عيون داخل آذانها."), T("Bats can only hunt in daylight.", "لا تصطاد الخفافيش إلا في النهار."), T("Bats cannot hear well.", "الخفافيش لا تسمع جيدًا."), T("Bats find things by listening to echoes.", "تحدد الخفافيش أماكن الأشياء بالاستماع إلى الصدى.")], a: 3,
+          x: T("The phrase is not meant literally. The passage explains that bats use echoes, which they hear, to know where things are, the job our eyes usually do.", "العبارة لا تُفهم حرفيًا. النص يشرح أن الخفافيش تستخدم الصدى الذي تسمعه لتعرف أماكن الأشياء، وهذا عمل تقوم به العين عادة.") },
+        { s: 0, q: T("Every morning, Khalid feeds his “marlok”, cleans its cage and listens to it sing. This means that a “marlok” is most likely:", "كل صباح يُطعم خالد «المَرلوك»، وينظّف قفصه، ويستمع إلى تغريده. هذا يعني أن «المَرلوك» على الأرجح:"),
+          o: [T("a bird", "طائر"), T("a fish", "سمكة"), T("a plant", "نبات"), T("a toy", "لعبة")], a: 0,
+          x: T("“Marlok” is a made-up word. The clues: it eats, lives in a cage and sings. A pet that lives in a cage and sings is a bird.", "«المَرلوك» كلمة غير حقيقية. القرائن: يأكل، ويعيش في قفص، ويغرّد. والحيوان الأليف الذي يعيش في قفص ويغرّد هو الطائر.") },
+
+        { s: 1, q: T("What number comes next?  2, 3, 5, 9, 17, …", "ما العدد التالي؟  2، 3، 5، 9، 17، …"),
+          o: [T("25", "25"), T("31", "31"), T("33", "33"), T("34", "34")], a: 2,
+          x: T("The jumps double each time: +1, +2, +4, +8, so next is +16. 17 + 16 = 33. (Another way to see it: double the number and take away 1.)", "مقدار الزيادة يتضاعف كل مرة: +1، +2، +4، +8، إذن التالية +16. 17 + 16 = 33. (طريقة أخرى: ضاعف العدد ثم اطرح 1.)") },
+        { s: 1, q: T("Hamad read one third of a book on Monday and one quarter of it on Tuesday. He still has 50 pages left. How many pages does the book have?", "قرأ حمد ثلث كتاب يوم الاثنين، وربعه يوم الثلاثاء، وبقيت له 50 صفحة. كم صفحة في الكتاب؟"),
+          o: [T("100", "100"), T("120", "120"), T("150", "150"), T("200", "200")], a: 1,
+          x: T("1/3 + 1/4 = 4/12 + 3/12 = 7/12 was read. 5/12 is left, and that is 50 pages. So 1/12 is 10 pages and the book has 12 × 10 = 120 pages.", "المقروء = 1/3 + 1/4 = 4/12 + 3/12 = 7/12. الباقي 5/12 ويساوي 50 صفحة، إذن 1/12 = 10 صفحات، والكتاب = 12 × 10 = 120 صفحة.") },
+        { s: 1, q: T("A square of paper is folded twice, as shown, then one hole is punched. What does the paper look like when it is opened?", "طُويت ورقة مربعة مرتين كما في الصورة، ثم ثُقبت ثقبًا واحدًا. كيف تبدو الورقة عند فتحها؟"),
+          fig: F.fold2, pics: true,
+          o: [holeOpt([[10, 10], [90, 10], [10, 90], [90, 90]], ["v", "h"]), holeOpt([[40, 60], [60, 60]], ["v", "h"]), holeOpt([[10, 60], [40, 60], [60, 60], [90, 60]], ["v", "h"]), holeOpt([[40, 40], [60, 40], [40, 60], [60, 60]], ["v", "h"])], a: 3,
+          x: T("The paper has 4 layers, so there are 4 holes. The hole was punched next to both folds, so after unfolding, the holes are close to the centre, one in each quarter, like mirror images across both fold lines.", "الورقة فيها 4 طبقات، إذن يصبح عندنا 4 ثقوب. والثقب كان قريبًا من خطي الطي، فبعد الفتح تكون الثقوب قريبة من المركز، واحد في كل ربع، متقابلة مثل صورة المرآة على خطي الطي.") },
+        { s: 1, q: T("How many cubes are in this stack? (Hidden cubes hold up the cubes you can see.)", "كم مكعبًا في هذا المجسم؟ (المكعبات المخفية هي التي تحمل المكعبات الظاهرة.)"),
+          fig: F.iso,
+          o: [T("6", "6"), T("8", "8"), T("9", "9"), T("10", "10")], a: 2,
+          x: T("Count column by column. Back row: 3 + 2 + 1 = 6. Front row: 1 + 1 + 1 = 3. Total 9. Some cubes are hidden, but they must be there to hold up the cubes on top.", "عُدّ عمودًا عمودًا. الصف الخلفي: 3 + 2 + 1 = 6. الصف الأمامي: 1 + 1 + 1 = 3. المجموع 9. بعض المكعبات مخفية، لكنها موجودة حتمًا لتحمل المكعبات التي فوقها.") },
+
+        { s: 2, q: T("Gear A turns clockwise and turns gear B. Gears B and C are joined by a belt. Gear C turns gear D. Which way does gear D turn?", "الترس أ يدور مع عقارب الساعة ويحرك الترس ب. الترسان ب وج متصلان بسير. والترس ج يحرك الترس د. في أي اتجاه يدور الترس د؟"),
+          fig: F.gearBelt,
+          o: [CW, ACW, T("It does not move", "لا يتحرك"), T("We cannot tell", "لا يمكن معرفة ذلك")], a: 0,
+          x: T("Touching gears turn opposite ways, but a belt that is not crossed makes both wheels turn the same way. A clockwise → B anticlockwise → C anticlockwise (belt) → D clockwise.", "الترسان المتلامسان يدوران في اتجاهين متعاكسين، أما السير غير المتقاطع فيجعل العجلتين تدوران في نفس الاتجاه. أ مع عقارب الساعة ← ب عكسها ← ج عكسها (بالسير) ← د مع عقارب الساعة.") },
+        { s: 2, q: T("A 20 kg box sits 3 m from the middle of the board (the pivot). Where should a 30 kg box go on the other side to balance it?", "صندوق وزنه 20 كجم على بُعد 3 م من منتصف اللوح (نقطة الارتكاز). أين يجب وضع صندوق وزنه 30 كجم في الجهة الأخرى حتى يتوازن اللوح؟"),
+          fig: F.lever,
+          o: [T("1 m from the pivot", "على بُعد 1 م"), T("2 m from the pivot", "على بُعد 2 م"), T("3 m from the pivot", "على بُعد 3 م"), T("4.5 m from the pivot", "على بُعد 4.5 م")], a: 1,
+          x: T("A board balances when weight × distance is the same on both sides. 20 × 3 = 60, and 30 × 2 = 60. The heavier box goes closer to the middle.", "يتوازن اللوح عندما يكون الوزن × المسافة متساويًا في الجهتين. 20 × 3 = 60، و30 × 2 = 60. الصندوق الأثقل يكون أقرب إلى المنتصف.") },
+        { s: 2, q: T("In which circuit will the bulb light up?", "في أي دائرة كهربائية سيضيء المصباح؟"), pics: true,
+          o: [circuit("open"), circuit("gap"), circuit("ok"), circuit("nobat")], a: 2,
+          x: T("A bulb lights only when there is a battery and a complete loop with no gaps. A has an open switch, B has a broken wire, and D has no battery. Only C is complete.", "يضيء المصباح فقط عندما توجد بطارية ومسار مغلق كامل بلا فتحات. في أ المفتاح مفتوح، وفي ب سلك مقطوع، وفي د لا توجد بطارية. فقط ج مكتملة.") },
+        { s: 2, q: T("Saad heats a pot of water. He writes the temperature at the start and then every minute: 20°, 35°, 50°, 65°, 80°. What will the thermometer most likely show 6 minutes after the start?", "سخّن سعد قدرًا من الماء، وسجّل درجة الحرارة عند البداية ثم كل دقيقة: 20°، 35°، 50°، 65°، 80°. ماذا سيُظهر مقياس الحرارة على الأرجح بعد 6 دقائق من البداية؟"),
+          o: [T("95 °C", "95 °س"), T("100 °C", "100 °س"), T("110 °C", "110 °س"), T("125 °C", "125 °س")], a: 1,
+          x: T("The pattern (+15 each minute) would give 110 °C, but water boils at 100 °C. While it boils, the temperature stays at 100 °C even if we keep heating. Science facts beat number patterns!", "النمط (+15 كل دقيقة) يعطي 110 °س، لكن الماء يغلي عند 100 °س، وأثناء الغليان تبقى الحرارة 100 °س حتى لو استمر التسخين. الحقيقة العلمية أقوى من نمط الأعداد!") },
+
+        { s: 3, q: T(eq("◆ + ◆ + ● = 17") + " and " + eq("◆ + ● = 12") + ". What is ●?", eq("◆ + ◆ + ● = 17") + " و " + eq("◆ + ● = 12") + ". ما قيمة ●؟"),
+          o: [T("5", "5"), T("6", "6"), T("7", "7"), T("12", "12")], a: 2,
+          x: T("The first line has one more ◆ than the second, and is 5 more (17 − 12). So ◆ = 5, and ● = 12 − 5 = 7.", "السطر الأول فيه ◆ زيادة عن الثاني، والفرق 17 − 12 = 5، إذن ◆ = 5، و● = 12 − 5 = 7.") },
+        { s: 3, q: T("Which picture is missing?", "ما الصورة الناقصة؟"), fig: F.arrowMatrix, pics: true,
+          o: [arrowOpt2(270, "w"), arrowOpt2(315, "b"), arrowOpt2(180, "b"), arrowOpt2(270, "b")], a: 3,
+          x: T("Two rules: (1) moving right, the arrow turns 45° (an eighth of a turn) clockwise, and each row starts a quarter turn further on; (2) the colour depends on the column: white, grey, black. So the missing arrow points left and is black.", "قاعدتان: (1) كلما تقدّمنا في الصف (من اليمين إلى اليسار) يدور السهم 45° (ثُمن دورة) مع عقارب الساعة، وكل صف يبدأ بعد ربع دورة من الصف الذي قبله؛ (2) اللون يحدده العمود: أبيض ثم رمادي ثم أسود. إذن السهم الناقص يتجه لليسار ولونه أسود.") },
+        { s: 3, q: T("Majed walks 4 blocks north, then 3 blocks east, then 4 blocks south. Where is he now, compared with where he started?", "مشى ماجد 4 شوارع نحو الشمال، ثم 3 شوارع نحو الشرق، ثم 4 شوارع نحو الجنوب. أين هو الآن بالنسبة لنقطة البداية؟"),
+          o: [T("3 blocks west", "3 شوارع غربًا"), T("11 blocks north", "11 شارعًا شمالًا"), T("Back at the start", "عاد إلى نقطة البداية"), T("3 blocks east", "3 شوارع شرقًا")], a: 3,
+          x: T("4 north and 4 south cancel out. Only the 3 blocks east are left.", "4 شمالًا و4 جنوبًا يلغي بعضهما بعضًا، ويبقى 3 شوارع نحو الشرق فقط.") },
+        { s: 3, q: T("If the day after tomorrow is Friday, what day was the day before yesterday?", "إذا كان بعد غدٍ هو يوم الجمعة، فما اليوم الذي كان قبل أمس؟"),
+          o: [T("Sunday", "الأحد"), T("Monday", "الاثنين"), T("Tuesday", "الثلاثاء"), T("Wednesday", "الأربعاء")], a: 1,
+          x: T("The day after tomorrow is Friday, so tomorrow is Thursday and today is Wednesday. Yesterday was Tuesday, so the day before yesterday was Monday.", "بعد غدٍ الجمعة، إذن غدًا الخميس، واليوم الأربعاء. أمس الثلاثاء، إذن قبل أمس الاثنين.") }
+      ],
+      B: [
+        { s: 0, q: T(PAIR.en + "<br>" + bold("ARCHITECT : BUILDING"), PAIR.ar + "<br>" + bold("مهندس معماري : مبنى")),
+          o: [T("pen : ink", "قلم : حبر"), T("library : shelf", "مكتبة : رف"), T("author : book", "مؤلف : كتاب"), T("reader : story", "قارئ : قصة")], a: 2,
+          x: T("An architect designs a building, and an author writes a book. The link is: a person and what he creates. A reader reads a story but does not create it.", "المهندس المعماري يصمم المبنى، والمؤلف يكتب الكتاب. العلاقة هي: الشخص وما يُنتجه. أما القارئ فيقرأ القصة ولا يُنتجها.") },
+        { s: 0, q: T("Hamad finished the race before Yasir but after Omar. Salem finished after Yasir. Nasser finished before Omar. Who finished third?", "أنهى حمد السباق قبل ياسر وبعد عمر. وأنهى سالم السباق بعد ياسر. وأنهى ناصر السباق قبل عمر. من حلّ في المركز الثالث؟"),
+          o: [T("Omar", "عمر"), T("Hamad", "حمد"), T("Yasir", "ياسر"), T("Nasser", "ناصر")], a: 1,
+          x: T("Build the order one clue at a time: Omar, Hamad, Yasir. Salem comes after Yasir, and Nasser before Omar: Nasser, Omar, Hamad, Yasir, Salem. Third is Hamad.", "رتّب خطوة خطوة: عمر، حمد، ياسر. سالم بعد ياسر، وناصر قبل عمر: ناصر، عمر، حمد، ياسر، سالم. الثالث هو حمد.") },
+        { s: 0, p: T("Recycling one aluminium can saves enough energy to run a television for about three hours. Aluminium can be melted and made into new cans again and again without becoming weaker. A new can made from recycled metal can be back on the shop shelf within a few weeks.",
+            "إعادة تدوير علبة ألمنيوم واحدة توفر طاقة تكفي لتشغيل تلفاز نحو ثلاث ساعات. ويمكن صهر الألمنيوم وصنع علب جديدة منه مرة بعد مرة دون أن يضعف. والعلبة الجديدة المصنوعة من معدن مُعاد تدويره قد تعود إلى رف المتجر خلال أسابيع قليلة."),
+          q: T("Which idea can we take from the text?", "أي فكرة نستنتجها من النص؟"),
+          o: [T("Throwing cans away wastes energy that could be saved.", "رمي العلب يضيّع طاقة كان يمكن توفيرها."), T("Televisions are made from aluminium cans.", "أجهزة التلفاز مصنوعة من علب الألمنيوم."), T("Aluminium gets weaker every time it is recycled.", "الألمنيوم يضعف في كل مرة يُعاد تدويره."), T("Recycled cans take years to reach the shops.", "العلب المُعاد تدويرها تحتاج سنوات لتصل إلى المتاجر.")], a: 0,
+          x: T("The text says recycling a can saves energy, so throwing it away loses that saving. The TV is only a comparison, and the text says the opposite of the last two choices.", "النص يقول إن تدوير العلبة يوفّر طاقة، إذن رميها يضيّع هذا التوفير. والتلفاز مجرد مثال للمقارنة، والنص يقول عكس الخيارين الأخيرين.") },
+        { s: 0, q: T("Dates are rich in sugar and give quick energy. Milk helps build strong bones. Vegetables contain vitamins that protect the body from illness. The main idea of these sentences is:", "التمر غني بالسكر ويعطي طاقة سريعة. والحليب يساعد على بناء عظام قوية. والخضراوات فيها فيتامينات تحمي الجسم من المرض. الفكرة الرئيسة لهذه الجمل هي:"),
+          o: [T("dates are the sweetest food", "التمر هو أحلى طعام"), T("milk is better than vegetables", "الحليب أفضل من الخضراوات"), T("only vegetables keep us healthy", "الخضراوات وحدها تحافظ على صحتنا"), T("different foods help the body in different ways", "الأطعمة المختلفة تفيد الجسم بطرق مختلفة")], a: 3,
+          x: T("The main idea must cover all the sentences, not just one. Each sentence gives a food and how it helps the body. The other choices talk about one food only, or say things the text does not say.", "الفكرة الرئيسة يجب أن تشمل كل الجمل لا جملة واحدة. كل جملة تذكر طعامًا وكيف يفيد الجسم. أما الخيارات الأخرى فتتحدث عن طعام واحد فقط، أو تقول أشياء لم يقلها النص.") },
+
+        { s: 1, q: T("What number comes next?  1, 1, 2, 3, 5, 8, …", "ما العدد التالي؟  1، 1، 2، 3، 5، 8، …"),
+          o: [T("11", "11"), T("12", "12"), T("13", "13"), T("16", "16")], a: 2,
+          x: T("Each number is the sum of the two numbers before it: 3 + 5 = 8, so 5 + 8 = 13.", "كل عدد هو مجموع العددين اللذين قبله: 3 + 5 = 8، إذن 5 + 8 = 13.") },
+        { s: 1, q: T("A rectangle has a perimeter of 24 cm. Its length is twice its width. What is its area?", "مستطيل محيطه 24 سم، وطوله ضعف عرضه. ما مساحته؟"),
+          o: [T("24 cm²", "24 سم²"), T("32 cm²", "32 سم²"), T("36 cm²", "36 سم²"), T("48 cm²", "48 سم²")], a: 1,
+          x: T("Length + width is half the perimeter: 12 cm. The length is 2 parts and the width 1 part, so 3 parts = 12 and 1 part = 4. Width 4 cm, length 8 cm, area 4 × 8 = 32 cm².", "الطول + العرض = نصف المحيط = 12 سم. الطول جزءان والعرض جزء، إذن 3 أجزاء = 12 والجزء = 4. العرض 4 سم والطول 8 سم، والمساحة 4 × 8 = 32 سم².") },
+        { s: 1, q: T("This shape is turned a quarter turn clockwise. Which picture shows the result?", "إذا دار هذا الشكل ربع دورة مع اتجاه عقارب الساعة، فأي صورة تُظهر النتيجة؟"), fig: F.rot2, pics: true,
+          o: [shOpt(rotCW(rotCW(SH_ROT2))), shOpt(rotCW(rotCW(rotCW(SH_ROT2)))), shOpt(flipH(SH_ROT2)), shOpt(rotCW(SH_ROT2))], a: 3,
+          x: T("Follow the black square. It is at the top-right. After a quarter turn clockwise, the top-right corner moves to the bottom-right, and the top row becomes the right-hand column.", "تتبّع المربع الأسود: هو في أعلى اليمين. بعد ربع دورة مع عقارب الساعة ينتقل أعلى اليمين إلى أسفل اليمين، ويصبح الصف العلوي هو العمود الأيمن.") },
+        { s: 1, q: T("This net is folded into a cube. Which symbol is opposite ★?", "عندما تُطوى هذه الشبكة لتكوين مكعب، أي رمز يكون مقابل ★؟"), fig: F.netSym,
+          o: [T("●", "●"), T("■", "■"), T("▲", "▲"), T("◆", "◆")], a: 1,
+          x: T("In a row of four squares, faces with exactly one square between them are opposite. ★ and ■ have ▲ between them, so they are opposite. (● is opposite ▲, and ◆ is opposite ✚.)", "في الصف المكوّن من 4 مربعات، يكون الوجهان متقابلين إذا كان بينهما مربع واحد بالضبط. بين ★ و■ يوجد ▲، إذن هما متقابلان. (● مقابل ▲، و◆ مقابل ✚.)") },
+
+        { s: 2, q: T("Gear A has 36 teeth and turns gear B, which has 12 teeth. Gear A turns 5 times. How many times does gear B turn?", "الترس أ له 36 سنًّا ويحرك الترس ب الذي له 12 سنًّا. إذا دار الترس أ 5 دورات، فكم دورة يدور الترس ب؟"),
+          o: [T("5", "5"), T("12", "12"), T("15", "15"), T("36", "36")], a: 2,
+          x: T("36 ÷ 12 = 3, so B turns 3 times for every turn of A. 5 × 3 = 15 turns.", "36 ÷ 12 = 3، إذن يدور ب 3 دورات مقابل كل دورة من أ. 5 × 3 = 15 دورة.") },
+        { s: 2, q: T("Inside a tube with no air, a feather and a hammer are dropped at the same moment from the same height. Which reaches the bottom first?", "داخل أنبوب مفرّغ من الهواء، أُسقطت ريشة ومطرقة في اللحظة نفسها ومن الارتفاع نفسه. أيهما يصل إلى القاع أولًا؟"),
+          o: [T("Both at the same time", "يصلان معًا في الوقت نفسه"), T("The hammer", "المطرقة"), T("The feather", "الريشة"), T("Neither of them falls", "لا يسقط أي منهما")], a: 0,
+          x: T("Normally the air slows the feather down. With no air, nothing slows either of them, and everything falls at the same rate. An astronaut showed this on the Moon in 1971.", "في العادة يُبطئ الهواء سقوط الريشة. وعندما لا يوجد هواء لا شيء يُبطئ أيًّا منهما، فتسقط الأشياء كلها بنفس السرعة. وقد أثبت ذلك رائد فضاء على سطح القمر عام 1971.") },
+        { s: 2, q: T("An egg sinks in tap water but floats in very salty water. Why?", "البيضة تغوص في ماء الصنبور، لكنها تطفو في الماء المالح جدًا. لماذا؟"),
+          o: [T("Salt makes the egg lighter.", "الملح يجعل البيضة أخف."), T("Salty water is denser (heavier for the same amount).", "الماء المالح أعلى كثافة (أثقل لنفس الحجم)."), T("Salty water is warmer.", "الماء المالح أدفأ."), T("The eggshell melts in salt water.", "قشرة البيضة تذوب في الماء المالح.")], a: 1,
+          x: T("Dissolved salt makes the water denser. An object floats when it is less dense than the liquid around it. The egg is denser than tap water but less dense than very salty water.", "الملح المذاب يزيد كثافة الماء. والجسم يطفو عندما تكون كثافته أقل من كثافة السائل حوله. البيضة أعلى كثافة من ماء الصنبور، لكنها أقل كثافة من الماء المالح جدًا.") },
+        { s: 2, q: T("A boy uses a long bar to lift a heavy rock. He pushes down at the right end. Where should he put the support (the fulcrum) to lift the rock most easily?", "يستخدم ولد عمودًا طويلًا لرفع صخرة ثقيلة، ويضغط على الطرف الأيمن. أين يضع نقطة الارتكاز ليرفع الصخرة بأسهل طريقة؟"),
+          fig: F.fulcrum,
+          o: [LT(0), LT(1), LT(2), T("Anywhere, it makes no difference", "في أي مكان، لا فرق")], a: 0,
+          x: T("The longer the part of the bar on the boy's side, the less force he needs. Putting the fulcrum close to the rock (A) gives him the longest side.", "كلما طال جزء العمود من جهة الولد قلّت القوة التي يحتاجها. وضع نقطة الارتكاز قريبًا من الصخرة (أ) يعطيه أطول جزء.") },
+
+        { s: 3, q: T("In a code, " + eq("2 ◇ 3 = 13") + " and " + eq("4 ◇ 1 = 17") + ". What is " + eq("3 ◇ 2") + "?", "في شفرة، " + eq("2 ◇ 3 = 13") + " و " + eq("4 ◇ 1 = 17") + ". ما قيمة " + eq("3 ◇ 2") + "؟"),
+          o: [T("5", "5"), T("12", "12"), T("13", "13"), T("17", "17")], a: 2,
+          x: T("The rule is: multiply each number by itself, then add. 2×2 + 3×3 = 4 + 9 = 13, and 4×4 + 1×1 = 17. So 3×3 + 2×2 = 9 + 4 = 13.", "القاعدة: اضرب كل عدد في نفسه ثم اجمع. 2×2 + 3×3 = 4 + 9 = 13، و4×4 + 1×1 = 17. إذن 3×3 + 2×2 = 9 + 4 = 13.") },
+        { s: 3, q: T("Which picture is missing?", "ما الصورة الناقصة؟"), fig: F.xor, pics: true,
+          o: [segOpt(["right", "bottom", "top", "d1"]), segOpt(["d1"]), segOpt(["right", "bottom"]), segOpt(["right", "bottom", "top"])], a: 3,
+          x: T("In each row, put picture 1 on top of picture 2. Lines that appear in both pictures disappear; lines that appear in only one picture stay. Row 3: the diagonal is in both, so it disappears, leaving right, bottom and top.", "في كل صف، ضع الصورة الأولى (اليمنى) فوق الصورة الثانية. الخطوط الموجودة في الصورتين تختفي، والخطوط الموجودة في صورة واحدة فقط تبقى. في الصف الثالث: القُطر موجود في الصورتين فيختفي، ويبقى الأيمن والأسفل والأعلى.") },
+        { s: 3, q: T("This is how a clock looks in a mirror. What is the real time?", "هكذا تبدو ساعة في المرآة. كم الوقت الحقيقي؟"), fig: F.mirrorClock,
+          o: [T("2:30", "2:30"), T("3:30", "3:30"), T("9:30", "9:30"), T("10:30", "10:30")], a: 2,
+          x: T("A mirror swaps left and right. The minute hand on 6 stays on 6. The hour hand, halfway between 2 and 3, really sits halfway between 10 and 9. That is 9:30. Quick trick: 12:00 − 2:30 = 9:30.", "المرآة تبدّل اليمين باليسار. عقرب الدقائق على 6 يبقى على 6. وعقرب الساعات الذي يظهر بين 2 و3 هو في الحقيقة بين 10 و9، أي الساعة 9:30. طريقة سريعة: 12:00 − 2:30 = 9:30.") },
+        { s: 3, q: T("Four friends sit on chairs numbered 1 to 4. Saad sits on chair 1. Ali is not on an end chair. Badr's chair number is one more than Ali's. Fahd does not sit next to Saad. Which chair is Fahd on?", "أربعة أصدقاء يجلسون على كراسٍ مرقمة من 1 إلى 4. سعد على الكرسي 1. علي ليس على كرسي في الطرف. رقم كرسي بدر أكبر من رقم كرسي علي بواحد. فهد لا يجلس بجانب سعد. على أي كرسي يجلس فهد؟"),
+          o: [T("Chair 1", "الكرسي 1"), T("Chair 2", "الكرسي 2"), T("Chair 3", "الكرسي 3"), T("Chair 4", "الكرسي 4")], a: 3,
+          x: T("Ali is on chair 2 or 3. If Ali were on 3, Badr would be on 4 and Fahd on 2, next to Saad. That breaks a rule. So Ali is on 2, Badr on 3, and Fahd on 4.", "علي على الكرسي 2 أو 3. لو كان علي على 3 لكان بدر على 4 وفهد على 2 بجانب سعد، وهذا يخالف الشرط. إذن علي على 2، وبدر على 3، وفهد على 4.") }
+      ]
+    }
+  };
+
+  function questions() { return BANK[S.level][S.set]; }
+  function secQs(s) { var out = []; questions().forEach(function (q, i) { if (q.s === s) out.push(i); }); return out; }
+
+  // ------------------------------------------------------------------ timer
+  function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } }
+  function startTimer() {
+    stopTimer();
+    S.timer = setInterval(function () {
+      S.left--; S.used[S.sec]++;
+      paintBar();
+      if (S.left <= 0) { S.toast = t("secUp"); nextSection(); }
+    }, 1000);
+  }
+  function nextSection() {
+    if (S.sec >= 3) { finish(); return; }
+    S.sec++; S.qi = 0; S.left = SEC_TIME; render(); startTimer();
+  }
+  function finish() { stopTimer(); S.phase = "result"; render(); window.scrollTo(0, 0); }
+
+  // ------------------------------------------------------------------ chrome
+  function chrome() {
+    var app = document.getElementById("app");
+    app.setAttribute("dir", S.lang === "ar" ? "rtl" : "ltr");
+    app.setAttribute("lang", S.lang);
+    document.title = t("title");
+    document.getElementById("hSchool").textContent = t("school");
+    document.getElementById("hTeacher").textContent = t("teacher");
+    document.getElementById("langBtn").textContent = t("lang");
+    document.getElementById("foot").textContent = t("foot");
+    document.getElementById("bar").hidden = S.phase !== "test";
+    document.getElementById("sLbl").textContent = t("section");
+    document.getElementById("tLbl").textContent = t("time");
+    var nb = document.getElementById("nextSecBtn");
+    nb.className = S.sureT ? "sure" : "";
+    nb.textContent = S.sureT ? t("sure") : (S.sec >= 3 ? t("finishTest") : t("nextSec"));
+    paintBar();
+  }
+  function paintBar() {
+    document.getElementById("sVal").textContent = (S.sec + 1) + "/4";
+    document.getElementById("tVal").textContent = mmss(S.left);
+    document.getElementById("tStat").className = "stat" + (S.left <= 60 ? " low" : "");
+  }
+  document.getElementById("nextSecBtn").onclick = function () {
+    if (S.sureT) { clearTimeout(S.sureT); S.sureT = null; nextSection(); return; }
+    S.sureT = setTimeout(function () { S.sureT = null; chrome(); }, 3000);
+    chrome();
+  };
+
+  // ------------------------------------------------------------------ views
+  function viewStart(v) {
+    var p = el("section", "panel");
+    p.appendChild(el("p", "eyebrow", SECS.map(function (s) { return s.ic; }).join(" ")));
+    p.appendChild(el("h1", null, t("title")));
+    p.appendChild(el("p", null, t("intro")));
+    p.appendChild(el("h3", null, t("levelQ")));
+    var pk = el("div", "pick");
+    [["L1", "l1", "l1s"], ["L2", "l2", "l2s"]].forEach(function (o) {
+      var b = btn("choice", "<b>" + t(o[1]) + "</b><span>" + t(o[2]) + "</span>", function () { S.level = o[0]; render(); });
+      b.id = "lvl" + o[0]; b.setAttribute("aria-pressed", S.level === o[0] ? "true" : "false"); pk.appendChild(b);
+    });
+    p.appendChild(pk);
+    p.appendChild(el("h3", null, t("testQ")));
+    var pt = el("div", "pick");
+    [["A", "tA", "tAs"], ["B", "tB", "tBs"]].forEach(function (o) {
+      var b = btn("choice", "<b>" + t(o[1]) + "</b><span>" + t(o[2]) + "</span>", function () { S.set = o[0]; render(); });
+      b.id = "set" + o[0]; b.setAttribute("aria-pressed", S.set === o[0] ? "true" : "false"); pt.appendChild(b);
+    });
+    p.appendChild(pt);
+    var ul = el("ul", "facts"); t("facts").forEach(function (f) { ul.appendChild(el("li", null, f)); }); p.appendChild(ul);
+    var row = el("div", "row"); var sb = btn("btn", t("start"), begin); sb.id = "startBtn"; row.appendChild(sb); p.appendChild(row);
+    p.appendChild(el("p", "note", t("disclaimer")));
+    var par = el("div", "parent"); par.appendChild(el("b", null, t("parents"))); par.appendChild(el("p", "note", t("parentsText"))); p.appendChild(par);
+    v.appendChild(p);
+  }
+  function begin() { S.phase = "test"; S.sec = 0; S.qi = 0; S.ans = {}; S.flags = {}; S.left = SEC_TIME; S.used = [0, 0, 0, 0]; S.toast = ""; render(); startTimer(); window.scrollTo(0, 0); }
+
+  function optContent(o) { return o.fig ? o.fig(S.lang) : L(o); }
+  function figHtml(q) { return q.fig ? '<div class="figwrap">' + q.fig(S.lang) + "</div>" : ""; }
+
+  function viewTest(v) {
+    var ids = secQs(S.sec), gi = ids[S.qi], q = questions()[gi], sec = SECS[S.sec];
+    if (S.toast) { v.appendChild(el("div", "toast", S.toast)); S.toast = ""; }
+    var p = el("section", "panel");
+    var hd = el("div", "sechead"); hd.appendChild(el("span", "ic", sec.ic));
+    var hh = el("div"); hh.appendChild(el("p", "eyebrow", t("section") + " " + (S.sec + 1) + " " + t("of") + " 4")); hh.appendChild(el("h2", null, L(sec))); hd.appendChild(hh);
+    p.appendChild(hd);
+    var nav = el("div", "qnav");
+    ids.forEach(function (id, k) {
+      var b = btn((k === S.qi ? "cur " : "") + (S.ans[id] != null ? "done " : "") + (S.flags[id] ? "flag" : ""), String(k + 1), function () { S.qi = k; render(); });
+      b.id = "qn" + k; b.setAttribute("aria-label", t("question") + " " + (k + 1)); nav.appendChild(b);
+    });
+    p.appendChild(nav);
+    p.appendChild(el("p", "eyebrow", t("question") + " " + (gi + 1) + " " + t("of") + " 16"));
+    if (q.p) p.appendChild(el("div", "passage", L(q.p)));
+    p.appendChild(el("p", "qtext", L(q.q)));
+    if (q.fig) p.appendChild(el("div", "figwrap", q.fig(S.lang)));
+    var opts = el("div", "opts" + (q.pics ? " pics" : ""));
+    q.o.forEach(function (o, k) {
+      var b = btn("opt" + (S.ans[gi] === k ? " sel" : ""), '<span class="let">' + LET[S.lang][k] + "</span><span>" + optContent(o) + "</span>", function () { S.ans[gi] = k; render(); });
+      b.setAttribute("aria-pressed", S.ans[gi] === k ? "true" : "false"); opts.appendChild(b);
+    });
+    p.appendChild(opts);
+    var row = el("div", "row end");
+    var fb = btn("flagBtn", S.flags[gi] ? "★ " + t("flagged") : "☆ " + t("flag"), function () { S.flags[gi] = !S.flags[gi]; render(); });
+    fb.setAttribute("aria-pressed", S.flags[gi] ? "true" : "false"); row.appendChild(fb);
+    var nv = el("div", "row");
+    var pb = btn("btn small alt", t("prev"), function () { S.qi--; render(); }); pb.disabled = S.qi === 0;
+    var nb = btn("btn small", t("next"), function () { S.qi++; render(); }); nb.disabled = S.qi === ids.length - 1; nb.id = "nextQ";
+    nv.appendChild(pb); nv.appendChild(nb); row.appendChild(nv);
+    p.appendChild(row);
+    v.appendChild(p);
+  }
+
+  function scoreBy() {
+    var by = [0, 0, 0, 0], tot = 0;
+    questions().forEach(function (q, i) { if (S.ans[i] === q.a) { by[q.s]++; tot++; } });
+    return { by: by, tot: tot };
+  }
+  function viewResult(v) {
+    var sc = scoreBy(), p = el("section", "panel");
+    p.appendChild(el("p", "eyebrow", t(S.level === "L1" ? "l1" : "l2") + " · " + t(S.set === "A" ? "tA" : "tB")));
+    p.appendChild(el("h1", null, t("doneTitle")));
+    p.appendChild(el("p", "eyebrow", t("score")));
+    p.appendChild(el("div", "big", sc.tot + " / 16"));
+    p.appendChild(el("p", null, sc.tot >= 13 ? t("msgHi") : sc.tot >= 9 ? t("msgMid") : t("msgLo")));
+    p.appendChild(el("h3", null, t("bySection")));
+    var box = el("div", "secs");
+    SECS.forEach(function (s, i) {
+      var r = el("div", "secrow");
+      r.appendChild(el("span", "lbl", s.ic + " " + L(s))); r.appendChild(el("span", "val", sc.by[i] + " / 4"));
+      var m = el("div", "meter", '<i style="width:' + (sc.by[i] * 25) + '%"></i>'); r.appendChild(m); box.appendChild(r);
+    });
+    p.appendChild(box);
+    var used = S.used.reduce(function (a, b) { return a + b; }, 0);
+    p.appendChild(el("p", "note", t("timeUsed") + ": " + mmss(used) + " / " + mmss(SEC_TIME * 4)));
+    var row = el("div", "row");
+    var rb = btn("btn", t("review"), function () { S.phase = "review"; S.rvSec = -1; render(); window.scrollTo(0, 0); }); rb.id = "reviewBtn"; row.appendChild(rb);
+    row.appendChild(btn("btn alt", t("other"), function () { S.set = S.set === "A" ? "B" : "A"; S.phase = "start"; render(); window.scrollTo(0, 0); }));
+    row.appendChild(btn("btn alt", t("again"), function () { S.phase = "start"; render(); window.scrollTo(0, 0); }));
+    p.appendChild(row);
+    var par = el("div", "parent"); par.appendChild(el("b", null, t("parents"))); par.appendChild(el("p", "note", t("parentsText"))); p.appendChild(par);
+    v.appendChild(p);
+  }
+  function viewReview(v) {
+    var p = el("section", "panel");
+    var hr = el("div", "row end"); hr.appendChild(el("h2", null, t("reviewTitle")));
+    hr.appendChild(btn("btn small alt", t("backRes"), function () { S.phase = "result"; render(); window.scrollTo(0, 0); })); p.appendChild(hr);
+    var tabs = el("div", "tabs");
+    [-1, 0, 1, 2, 3].forEach(function (s) {
+      var b = btn("tab" + (S.rvSec === s ? " cur" : ""), s < 0 ? t("all") : SECS[s].ic + " " + (s + 1), function () { S.rvSec = s; render(); });
+      if (s >= 0) b.setAttribute("aria-label", L(SECS[s])); tabs.appendChild(b);
+    });
+    p.appendChild(tabs);
+    questions().forEach(function (q, i) {
+      if (S.rvSec >= 0 && q.s !== S.rvSec) return;
+      var box = el("div", "rvq");
+      var a = S.ans[i], st = a == null ? "skip" : a === q.a ? "ok" : "no";
+      box.appendChild(el("div", "row", '<span class="eyebrow">' + t("question") + " " + (i + 1) + " · " + SECS[q.s].ic + '</span><span class="tag ' + st + '">' + t(st) + "</span>"));
+      if (q.p) box.appendChild(el("div", "passage", L(q.p)));
+      box.appendChild(el("p", "qtext", L(q.q)));
+      if (q.fig) box.appendChild(el("div", "figwrap", q.fig(S.lang)));
+      var opts = el("div", "opts" + (q.pics ? " pics" : ""));
+      q.o.forEach(function (o, k) {
+        var cls = "opt" + (k === q.a ? " right" : (k === a ? " wrong" : ""));
+        var mark = k === q.a ? "✓" : (k === a ? "✗" : "");
+        var d = el("div", cls, '<span class="let">' + LET[S.lang][k] + "</span><span>" + optContent(o) + '</span><span class="mark">' + mark + "</span>");
+        opts.appendChild(d);
+      });
+      box.appendChild(opts);
+      box.appendChild(el("div", "explain", "<b>" + t("explanation") + "</b>" + L(q.x)));
+      p.appendChild(box);
+    });
+    v.appendChild(p);
+  }
+
+  function render() {
+    mkN = 0;
+    chrome();
+    var v = document.getElementById("view"); v.innerHTML = "";
+    if (S.phase === "start") viewStart(v);
+    else if (S.phase === "test") viewTest(v);
+    else if (S.phase === "result") viewResult(v);
+    else viewReview(v);
+  }
+  document.getElementById("langBtn").onclick = function () {
+    S.lang = S.lang === "en" ? "ar" : "en";
+    try { localStorage.setItem("mawhibaTestLang", S.lang); } catch (e) {}
+    render();
+  };
+  window.addEventListener("beforeunload", function (e) { if (S.phase === "test") { e.preventDefault(); e.returnValue = ""; } });
+
+  // exposed for automated checks
+  window.MawhibaPractice = { BANK: BANK, S: S, key: key, rotCW: rotCW, flipH: flipH, flipV: flipV, norm: norm, SH: { m: SH_MIRROR, r1: SH_ROT1, r2: SH_ROT2 } };
+  render();
+})();
+</script>
+
+</body>
+</html>
