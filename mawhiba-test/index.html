@@ -61,6 +61,7 @@ p { margin: 0; }
 .btn.alt { background: var(--surface); color: var(--ink); }
 .btn.small { font-size: 16px; padding: 7px 12px; box-shadow: 0 3px 0 var(--ink); }
 .btn[disabled] { opacity: .4; cursor: default; }
+.btn.sure { background: var(--coral); color: #fff; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .row.end { justify-content: space-between; }
 
@@ -185,6 +186,8 @@ svg .sym { fill: var(--ink); font: 800 22px var(--body); text-anchor: middle; do
       tA: "Test A", tAs: "Start with this one", tB: "Test B", tBs: "A second test, a bit different",
       facts: ["4 sections × 4 questions", "6 minutes for each section", "You can move between questions in a section", "When a section ends, you cannot go back to it"],
       start: "Start", section: "Section", time: "Time", nextSec: "Next section", finishTest: "Finish", sure: "Tap again",
+      lastNote: "This is the last question of the section. When you are ready, press the button to move on. You cannot come back to this section.",
+      sureNote: "Tap the button again to confirm.",
       question: "Question", of: "of", prev: "Previous", next: "Next", flag: "Mark to check later", flagged: "Marked",
       secUp: "Time is up for this section. On to the next one!",
       doneTitle: "Test finished", score: "Your score", bySection: "Your score in each section", timeUsed: "Time used",
@@ -206,6 +209,8 @@ svg .sym { fill: var(--ink); font: 800 22px var(--body); text-anchor: middle; do
       tA: "الاختبار أ", tAs: "ابدأ بهذا", tB: "الاختبار ب", tBs: "اختبار ثانٍ مختلف قليلًا",
       facts: ["4 أقسام × 4 أسئلة", "6 دقائق لكل قسم", "تستطيع التنقل بين أسئلة القسم", "عندما ينتهي القسم لا يمكنك الرجوع إليه"],
       start: "ابدأ", section: "القسم", time: "الوقت", nextSec: "القسم التالي", finishTest: "إنهاء", sure: "اضغط مرة أخرى",
+      lastNote: "هذا آخر سؤال في القسم. عندما تكون جاهزًا اضغط الزر لتنتقل. لا يمكنك الرجوع إلى هذا القسم.",
+      sureNote: "اضغط الزر مرة أخرى للتأكيد.",
       question: "السؤال", of: "من", prev: "السابق", next: "التالي", flag: "علّمه لأراجعه", flagged: "مُعلَّم",
       secUp: "انتهى وقت هذا القسم. ننتقل إلى القسم التالي!",
       doneTitle: "انتهى الاختبار", score: "نتيجتك", bySection: "نتيجتك في كل قسم", timeUsed: "الوقت المستخدم",
@@ -784,11 +789,12 @@ svg .sym { fill: var(--ink); font: 800 22px var(--body); text-anchor: middle; do
     document.getElementById("tVal").textContent = mmss(S.left);
     document.getElementById("tStat").className = "stat" + (S.left <= 60 ? " low" : "");
   }
-  document.getElementById("nextSecBtn").onclick = function () {
-    if (S.sureT) { clearTimeout(S.sureT); S.sureT = null; nextSection(); return; }
-    S.sureT = setTimeout(function () { S.sureT = null; chrome(); }, 3000);
-    chrome();
-  };
+  function advanceClick() {
+    if (S.sureT) { clearTimeout(S.sureT); S.sureT = null; nextSection(); window.scrollTo(0, 0); return; }
+    S.sureT = setTimeout(function () { S.sureT = null; if (S.phase === "test") render(); }, 4000);
+    render();
+  }
+  document.getElementById("nextSecBtn").onclick = advanceClick;
 
   // ------------------------------------------------------------------ views
   function viewStart(v) {
@@ -849,9 +855,13 @@ svg .sym { fill: var(--ink); font: 800 22px var(--body); text-anchor: middle; do
     fb.setAttribute("aria-pressed", S.flags[gi] ? "true" : "false"); row.appendChild(fb);
     var nv = el("div", "row");
     var pb = btn("btn small alt", t("prev"), function () { S.qi--; render(); }); pb.disabled = S.qi === 0;
-    var nb = btn("btn small", t("next"), function () { S.qi++; render(); }); nb.disabled = S.qi === ids.length - 1; nb.id = "nextQ";
+    var last = S.qi === ids.length - 1, nb;
+    if (last) {
+      nb = btn("btn small" + (S.sureT ? " sure" : ""), S.sureT ? t("sure") : (S.sec >= 3 ? t("finishTest") : t("nextSec")) + " ›", advanceClick); nb.id = "endSec";
+    } else { nb = btn("btn small", t("next"), function () { S.qi++; render(); }); nb.id = "nextQ"; }
     nv.appendChild(pb); nv.appendChild(nb); row.appendChild(nv);
     p.appendChild(row);
+    if (last) p.appendChild(el("p", "note", S.sureT ? t("sureNote") : t("lastNote")));
     v.appendChild(p);
   }
 
